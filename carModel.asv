@@ -8,9 +8,7 @@ classdef carModel < handle
         theta = 0; % 方向角
         target = [0,0,0]; % 目标点
         dt = 0.1; % 时间步长 (默认为 0.1)
-        T = 1000;
         history = []; % 状态历史记录 (n x 3 矩阵)
-        hisCnt = 1;
         isRecordHistory = true;% 是否记录历史状态
         lastInput = []; % 上一个输入， 2x1
     end
@@ -30,13 +28,9 @@ classdef carModel < handle
             if nargin > 5
                 obj.isRecordHistory = isRecordHistory_init;
             end
-            if nargin > 6
-                obj.T = T;
-            end
 
             % 如果开启了历史记录功能，初始化时也记录状态
             if obj.isRecordHistory
-                obj.history = nan(obj.T, 3);
                 obj.recordState();
                 obj.lastInput = [0;0];
             end
@@ -77,8 +71,7 @@ classdef carModel < handle
         function recordState(obj)
             % 将当前状态存入 history (一行数据：px, py, theta)
             state = [obj.px, obj.py, obj.theta];
-            obj.history(obj.hisCnt, :) = state;
-            obj.hisCnt = obj.hisCnt+1;
+            obj.history = [obj.history; state];
         end
 
         % 获取历史记录的方法
@@ -292,7 +285,7 @@ classdef carModel < handle
                 [filteredInput, ~, flag, ~] = quadprog(H, f, A_cbf, B_cbf,[],[],[],[],[],opt);
                 % if fall as well, use minmaxd instead
                 if flag < 0
-                    % warning("QP error, using minimum invasive result")
+                    warning("QP error, using minimum invasive result")
                     filteredInput = minmaxlinear(A_cbf, B_cbf);
                 end
             end
