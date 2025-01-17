@@ -275,7 +275,8 @@ classdef carModel < handle
 
             A_circ = -(Omega * na_hat_nearest)' * M;
             % B_circ = -circ_a + circ_b*dnearest;
-            p_i = [-4.00000000000000	6.00000000000000	-3.00000000000000	0.500000000000000]';
+            % p_i = [-4.00000000000000	6.00000000000000	-3.00000000000000	0.500000000000000]';
+            p_i = [-0.585937500000000	1.40625000000000	-1.12500000000000	0.300000000000000]';
             B_circ = - [dnearest^3, dnearest^2, dnearest, 1] * p_i;
 
             A = [A_cbf; A_circ];
@@ -299,12 +300,13 @@ classdef carModel < handle
         end
 
 
-
-        function filteredInput = RCBF_Filter_softVO(obj, agentArr, nominalInput)
-            % deprecated, this does not work properly
+        function filteredInput = RCBF_Filter_nearest_circulation_soft(obj, agentArr, idxNow, nominalInput)
             D = 0.1;
-            n = length(agentArr);
-            lambda = 1000;
+            Omega = [0 -1;
+                1 0];
+            circ_a = 0.5;
+            circ_b = 0.8;
+            n = length(agentArr)-1;
 
             % get states
             [pax, pay, patheta] = obj.getState();
@@ -313,48 +315,64 @@ classdef carModel < handle
             M = [cos(patheta), -D*sin(patheta);
                 sin(patheta), D*cos(patheta)];
 
-            A = zeros(n + 2*n, 2 + n);
-            B = zeros(n + 2*n, 1);
-            % iterate to get orringinal CBF constraints
-            for i = 1:n
+            % cbf constraints
+            A_cbf = zeros(n, 2+1);
+            B_cbf = zeros(n, 1);
+            % iterate to get constraints
+            dnearest = +inf;
+            na_hat_nearest = [0;0];
+            cnt = 1;
+            for i = 1:n+1
+                if i == idxNow
+                    continue
+                end
                 [pbx, pby, pbtheta] = agentArr{i}.getState();
                 Pb = [pbx; pby];
                 Pm = 0.5 * (Pa + Pb); % middle point
                 na_hat = (Pa - Pm)/norm(Pa - Pm);
-                b = 0.5*obj.alpha*(norm(Pa - Pb) - 2*obj.R);
-                A(i, :) = [-na_hat' * M, zeros(n, 1)];
-                B(i) = b;
-
-                % TODO: get n_i, get cos(gamma_i)
-                % n_i  = -na_hat
-                A(i+n, :) = [-na_hat' * M / norm(nominalInput), zeros(1, i-1), -1, zeros(1, n-i)];
-                B(i+n) = cos( asin(2*D/norm(Pa - Pb)) );
+                d = norm(Pa - Pb) - 2*obj.R;
+                b = 0.5*obj.alpha*d;
+                A_cbf(cnt, :) = [-na_hat' * M, 0];
+                B_cbf(cnt) = b;
+                cnt = cnt + 1;
+                
+                if d < dnearest
+                    dnearest = d;
+                    na_hat_nearest = na_hat;
+                end
             end
 
-            A(2*n + 1:end, :) = [zeros(n,2), -eye(n)];
-            B(2*n + 1:end) = 1E-3 * ones(n, 1);
+            A_circ = [-(Omega * na_hat_nearest)' * M, -1];
+            % B_circ = -circ_a + circ_b*dnearest;
+            % p_i = [-4.00000000000000	6.00000000000000	-3.00000000000000	0.500000000000000]';
+            p_i = [-0.585937500000000	1.40625000000000	-1.12500000000000	0.300000000000000]';
+            B_circ = - [dnearest^3, dnearest^2, dnearest, 1] * p_i;
+
+            A = [A_cbf; A_circ];
+            B = [B_cbf; B_circ];
 
             opt = optimoptions("quadprog","Display","off");
+            
+            M_extend = [M, zeros(2, 1);
+                        zeros(1, 2), 1];
+            nominalInput_extend = [nominalInput; 0];
+            Q = [eye(2), zeros(2, 1); zeros(1, 2), 5];
+            H = 2 * M_extend' * Q * M_extend;
+            f = -2 * (M_extend' * M_extend) * nominalInput_extend;
+            [filteredInput, ~, flag, ~] = quadprog(H, f, A, B,[],[],[],[],[],opt);
 
-            % NOTE: THE BIG M REALLLLY MATTERS HERE
-            % H = 2 * eye(2);
-            % f = -2 * M * nominalInput;
-            % [filteredInput, ~, flag, ~] = quadprog(H,f,-na_hat',B,[],[],[],[],[],opt);
-            % filteredInput = M \ filteredInput;
-
-            M_extend = [M, zeros(2, n)];
-            H = 2 * M_extend' * eye(2) * M_extend;
-            f = -2 * (M_extend' * M_extend) * [nominalInput; zeros(n, 1)] + ...
-                lambda * [zeros(2, 1); ones(n, 1)];
-            [filteredInput_extend, ~, flag, ~] = quadprog(H, f, A, B,[],[],[],[],[],opt);
-            filteredInput = filteredInput_extend(1:2);
-
-            if flag < 0
-                % this can be further improved
-                warning("QP error, using minimum invasive result")
-                filteredInput = mimaxlinear(A(1:n, 1:2), B(1:n));
+            if flag < 0 % if fall, use safety constraints only
+                % warning("QP error, using safety constraints only")
+                [filteredInput, ~, flag, ~] = quadprog(H, f, A_cbf, B_cbf,[],[],[],[],[],opt);
+                % if fall as well, use minmaxd instead
+                if flag < 0
+                    % warning("QP error, using minimum invasive result")
+                    filteredInput = minmaxlinear(A_cbf, B_cbf);
+                end
             end
         end
+
+        
 
 
     end
