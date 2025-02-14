@@ -362,11 +362,11 @@ classdef carModel < handle
             [filteredInput, ~, flag, ~] = quadprog(H, f, A, B,[],[],[],[],[],opt);
 
             if flag < 0 % if fall, use safety constraints only
-                % warning("QP error, using safety constraints only")
+                warning("QP error, using safety constraints only")
                 [filteredInput, ~, flag, ~] = quadprog(H, f, A_cbf, B_cbf,[],[],[],[],[],opt);
                 % if fall as well, use minmaxd instead
                 if flag < 0
-                    % warning("QP error, using minimum invasive result")
+                    warning("QP error, using minimum invasive result")
                     filteredInput = minmaxlinear(A_cbf, B_cbf);
                 end
             end

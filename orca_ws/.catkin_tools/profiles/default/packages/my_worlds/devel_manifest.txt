@@ -1,5 +1,0 @@
-ORCA_Gazebo_ROS/two-wheeled-robot-simulation/my_worlds
-/home/chengrui/wk/orca_ws/devel/.private/my_worlds/cmake.lock /home/chengrui/wk/orca_ws/devel/./cmake.lock
-/home/chengrui/wk/orca_ws/devel/.private/my_worlds/share/my_worlds/cmake/my_worldsConfig-version.cmake /home/chengrui/wk/orca_ws/devel/share/my_worlds/cmake/my_worldsConfig-version.cmake
-/home/chengrui/wk/orca_ws/devel/.private/my_worlds/share/my_worlds/cmake/my_worldsConfig.cmake /home/chengrui/wk/orca_ws/devel/share/my_worlds/cmake/my_worldsConfig.cmake
-/home/chengrui/wk/orca_ws/devel/.private/my_worlds/lib/pkgconfig/my_worlds.pc /home/chengrui/wk/orca_ws/devel/lib/pkgconfig/my_worlds.pc

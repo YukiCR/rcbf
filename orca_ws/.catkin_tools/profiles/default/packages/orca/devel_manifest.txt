@@ -1,8 +1,0 @@
-ORCA_Gazebo_ROS/orca
-/home/chengrui/wk/orca_ws/devel/.private/orca/cmake.lock /home/chengrui/wk/orca_ws/devel/./cmake.lock
-/home/chengrui/wk/orca_ws/devel/.private/orca/share/orca/cmake/orcaConfig.cmake /home/chengrui/wk/orca_ws/devel/share/orca/cmake/orcaConfig.cmake
-/home/chengrui/wk/orca_ws/devel/.private/orca/share/orca/cmake/orcaConfig-version.cmake /home/chengrui/wk/orca_ws/devel/share/orca/cmake/orcaConfig-version.cmake
-/home/chengrui/wk/orca_ws/devel/.private/orca/lib/libRVO.so /home/chengrui/wk/orca_ws/devel/lib/libRVO.so
-/home/chengrui/wk/orca_ws/devel/.private/orca/lib/pkgconfig/orca.pc /home/chengrui/wk/orca_ws/devel/lib/pkgconfig/orca.pc
-/home/chengrui/wk/orca_ws/devel/.private/orca/lib/orca/OrcaAgents /home/chengrui/wk/orca_ws/devel/lib/orca/OrcaAgents
-/home/chengrui/wk/orca_ws/devel/.private/orca/lib/orca/Orca /home/chengrui/wk/orca_ws/devel/lib/orca/Orca
