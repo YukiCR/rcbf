@@ -1,5 +1,5 @@
-classdef twoOrderModel < handle
-    %TWOORDERMODEL The dynamic model of a two-order, acceleration-controled translation model
+classdef CWModel < handle
+    %CWModel The dynamic model of a dynamic system governed by Clohessy-Wiltshire equation
     %   此处显示详细说明
     
     properties
@@ -10,6 +10,13 @@ classdef twoOrderModel < handle
         history = [];
         stepNow = 0; % current step number
         isRecordHistory = true; % whether to record the history of the system
+    end
+
+    properties (Constant)
+        % the angular velocity of the chasing satellite, say the chasing satellite is international space station
+        % omega is then given by sqrt(mu/(R_earth+R_isshight)) = sqrt(3.986e14/(6.371+0.4)*1e6^3) = 0.00113
+        % the period of ISS is then given by 2*pi/omega = 2*pi/(0.00113) = 5560s, which is nearly 93 minutes
+        omega = 0.00113; 
     end
 
     % methods to manage class level properties (static properties), 
@@ -34,37 +41,55 @@ classdef twoOrderModel < handle
     end
 
     methods
-        function obj = twoOrderModel(p_init, v_init, target)
-            %TWOORDERMODEL constructor
+        function obj = CWModel(p_init, v_init, target)
+            %CWModel constructor
             obj.p = p_init;
             obj.v = v_init;
             obj.target = target;
 
             % if recored the history
             if obj.isRecordHistory
-                obj.history = zeros(twoOrderModel.setgetsteps(), 6);
+                obj.history = zeros(CWModel.setgetsteps(), 6);
                 obj.recordOnce();
             end
 
-            if isempty(twoOrderModel.setgetdt())
+            if isempty(CWModel.setgetdt())
                 % set the default dt
-                twoOrderModel.setgetdt(0.1);
+                CWModel.setgetdt(0.1);
             end
-            if isempty(twoOrderModel.setgetsteps())
+            if isempty(CWModel.setgetsteps())
                 % set the default steps
-                twoOrderModel.setgetsteps(2000);
+                CWModel.setgetsteps(2000);
             end
         end
         
         function obj = stepForward(obj, u)
             %stepForward update the state of the system, the dynamics of the model
-            obj.v = obj.v + u * twoOrderModel.setgetdt();
-            obj.p = obj.p + obj.v * twoOrderModel.setgetdt();
+            %   stepForward(obj, u) updates the state of the system with the given control input u
+            %   we use Euler method to update the state of the system
+
+            obj.p = obj.p + obj.v * CWModel.setgetdt();
+            obj.v = obj.v + (obj.getCWf() + u) * CWModel.setgetdt();
 
             if obj.isRecordHistory
                 % record the state of the system
                 obj.recordOnce();
             end
+        end
+
+        function f = getCWf(obj)
+            %getCWf get the drifting part of the dynamics of CW model
+            %   the CW-model is given by
+            %   x_dotdot = -2*omega*y_dot + u_x = f_x + u_x
+            %   y_dotdot = 2*omega*x_dot + 3*omega^2*y + u_y = f_y + u_y
+            %   z_dotdot = -omega^2*z + u_z = f_z + u_z
+            % this function returns the drifting part of the dynamics
+            %   f = [f_x; f_y; f_z]
+
+            f = zeros(3, 1);
+            f(1) = -2 * CWModel.omega * obj.v(2);
+            f(2) = 2 * CWModel.omega * obj.v(1) + 3 * CWModel.omega^2 * obj.p(2);
+            f(3) = -CWModel.omega^2 * obj.p(3);
         end
 
         function obj = recordOnce(obj)
@@ -73,6 +98,19 @@ classdef twoOrderModel < handle
             %   in the history array.
             obj.stepNow = obj.stepNow + 1;
             obj.history(obj.stepNow, :) = [obj.p', obj.v'];
+        end
+    end
+
+    methods (Static)
+        function f = getAgentCWf(p, v)
+            %getAgentCWf get the drifting part of the dynamics of CW model
+            %   f = getAgentCWf(p, v) returns the drifting part of the dynamics
+            %   of the system with the given position p and velocity v.
+            %   f = [f_x; f_y; f_z]
+            f = zeros(3, 1);
+            f(1) = -2 * CWModel.omega * v(2);
+            f(2) = 2 * CWModel.omega * v(1) + 3 * CWModel.omega^2 * p(2);
+            f(3) = -CWModel.omega^2 * p(3);
         end
     end
 
@@ -110,7 +148,7 @@ classdef twoOrderModel < handle
     end
 
     methods
-        function u_safe = distributedSafeFiltering(obj, u_ref, senseMat, privilege)
+        function [u_safe, isQPfeasible] = distributedSafeFiltering(obj, u_ref, senseMat, privilege)
             %DISTRIBUTEDSAFEFILTERING get the safe-guarenteed control in a reciprocal way
             %   u_safe = reciprocalSafeFiltering(obj, u_ref, senseMat) returns the
             %   safe-guarenteed control input of the system based on the current state, 
@@ -132,12 +170,15 @@ classdef twoOrderModel < handle
             % s.t. CBFconsA * u <= CBFconsb
             H = 2*eye(3); % quadratic term
             f = -2*u_ref; % linear term
-            [u_safe, modifValue, exitflag] = quadprog(H, f, CBFconsA, CBFconsb, [], [], [], [], [], twoOrderModel.quadopt); % solve the quadratic programming problem
+            [u_safe, modifValue, exitflag] = quadprog(H, f, CBFconsA, CBFconsb, [], [], [], [], [], CWModel.quadopt); % solve the quadratic programming problem
 
             % if the QP fails, use the minimum invasive result
             if exitflag < 0
                 warning("QP error, using minimum invasive result")
-                u_safe = twoOrderModel.minmaxlinear(CBFconsA, CBFconsb); 
+                u_safe = CWModel.minmaxlinear(CBFconsA, CBFconsb); 
+                isQPfeasible = 0;
+            else
+                isQPfeasible = 1;
             end
         end 
 
@@ -158,6 +199,7 @@ classdef twoOrderModel < handle
             for i = 1:N_obj
                 p_i = senseMat(i, 1:3)';
                 v_i = senseMat(i, 4:6)';
+                f_i = CWModel.getAgentCWf(p_i, v_i); % get the drifting part of the dynamics of the sensed object
                 r_i = senseMat(i, 7);
                 R_i = r_i + obj.r;
                 
@@ -169,15 +211,18 @@ classdef twoOrderModel < handle
                 CBFconsA(i, :) = -n_hat;
                 
                 % privilege matrix for only positive definite parts
-                % CBFconsb(i) = (obj.alpha1 + obj.alpha2) * n_hat' * obj.v  ...
-                %                 + obj.privArr(i)* ( obj.alpha1*obj.alpha2* (d_i - R_i) ...
-                %                     + 1/d_i * ( v_rel'*v_rel - n_hat'*v_rel * n_hat'*v_rel ) );
+                CBFconsb(i) = (obj.alpha1 + obj.alpha2) * n_hat' * obj.v  ...
+                                + n_hat' * obj.getCWf() ...
+                                + obj.privArr(i)* ( obj.alpha1*obj.alpha2* (d_i - R_i) ...
+                                                    + 1/d_i * ( v_rel'*v_rel - n_hat'*v_rel * n_hat'*v_rel ) ...
+                              );
 
                 % privilege matrix for the whole b
-                CBFconsb(i) = obj.privArr(i)* ( (obj.alpha1 + obj.alpha2) * n_hat' * (obj.v - v_i)  ...
-                                                +  obj.alpha1*obj.alpha2* (d_i - R_i) ...
-                                                + 1/d_i * ( v_rel'*v_rel - n_hat'*v_rel * n_hat'*v_rel ) ...
-                                               );
+                % CBFconsb(i) = obj.privArr(i)* ( (obj.alpha1 + obj.alpha2) * n_hat' * (obj.v - v_i)  ...
+                %                                 +  obj.alpha1*obj.alpha2* (d_i - R_i) ...
+                %                                 + 1/d_i * ( v_rel'*v_rel - n_hat'*v_rel * n_hat'*v_rel ) ...
+                %                                 + n_hat' * (obj.getCWf() - f_i) ...
+                %                                );
 
                 if d_i < R_i - 1E-5
                     % give a warn of collision, collision may happen due to
@@ -187,6 +232,82 @@ classdef twoOrderModel < handle
                 end
             end 
         end
+
+        function [u_safe, isQPfeasible] = distributedSafeFilteringBenchmark(obj, u_ref, senseMat, privilege)
+            %DISTRIBUTEDSAFEFILTERINGBENCHMARK get the safe-guarenteed control in a reciprocal way, assuming other agents are not controlled
+            %   u_safe = reciprocalSafeFiltering(obj, u_ref, senseMat) returns the
+            %   safe-guarenteed control input of the system based on the current state, 
+            %   target position and the sensed data.
+            %   u_ref is the reference control, which can be given by the PID controller.
+            %   senseMat is a n*4 matrix, where n is the number of sensed objects, with each row
+            %   the position and radius of the sensed object, [x, y, z, r].
+            
+            N_obj = size(senseMat, 1); % number of sensed objects
+            obj.privArr = 0.5*ones(N_obj, 1); % the privilege array
+            % set resArr to privilege if it is given
+            if nargin > 3 && size(privilege, 1) == N_obj && size(privilege, 2) == 1
+                obj.privArr = privilege;
+            end
+            
+            [CBFconsA, CBFconsb] = obj.getCBFconstraintsBenchmark(senseMat); % get the CBF constraints
+            % safety filtering, minimizing the distance to the reference control while satisfying the CBF constraints
+            % u_safe = argmin ||u - u_ref||^2
+            % s.t. CBFconsA * u <= CBFconsb
+            H = 2*eye(3); % quadratic term
+            f = -2*u_ref; % linear term
+            [u_safe, modifValue, exitflag] = quadprog(H, f, CBFconsA, CBFconsb, [], [], [], [], [], CWModel.quadopt); % solve the quadratic programming problem
+
+            % if the QP fails, use the minimum invasive result
+            if exitflag < 0
+                warning("QP error, using minimum invasive result")
+                u_safe = CWModel.minmaxlinear(CBFconsA, CBFconsb); 
+                isQPfeasible = 0;
+            else
+                isQPfeasible = 1;
+            end
+        end 
+
+        function [CBFconsA, CBFconsb] = getCBFconstraintsBenchmark(obj, senseMat)
+            %getCBFconstraints get the CBF constraints, assuming other agents are not controlled
+            %   CBFcons = getCBFconstraints(obj, senseMat) returns the CBF constraints
+            %   based on the current state and target position.
+            %   senseMat is a n*7 matrix, where n is the number of sensed objects, with each row
+            %   the position, velocity and radius of the sensed object, [x, y, z, vx, vy, vz, r].
+            %   CBFconsA is a n*m matrix and CBFconsb is a n*1 matrix, where n is the number of sensed objects, m is the 
+            %   demension of the control input.
+            
+            N_obj = size(senseMat, 1); % number of sensed objects
+            CBFconsA = zeros(N_obj, 3); % CBF constraints
+            CBFconsb = zeros(N_obj, 1); % CBF constraints
+            
+            for i = 1:N_obj
+                p_i = senseMat(i, 1:3)';
+                v_i = senseMat(i, 4:6)';
+                f_i = CWModel.getAgentCWf(p_i, v_i); % get the drifting part of the dynamics of the sensed object
+                r_i = senseMat(i, 7);
+                R_i = r_i + obj.r;
+                
+                d_i = norm(obj.p - p_i); % distance between the system and the sensed object
+                n_hat = (obj.p - p_i) / d_i; % unitvector pointing from the sensed object to the system
+                v_rel = obj.v - v_i; % relative velocity
+                
+                % control of agent i can guarentee safety by satisfying CBF scaled by privilege
+                CBFconsA(i, :) = -n_hat;
+            
+                CBFconsb(i) = (obj.alpha1 + obj.alpha2) * n_hat' * (obj.v - v_i)  ...
+                                + n_hat' * (obj.getCWf() - f_i) ...
+                                + obj.alpha1*obj.alpha2* (d_i - R_i) ...
+                                + 1/d_i * ( v_rel'*v_rel - n_hat'*v_rel * n_hat'*v_rel );
+
+                if d_i < R_i - 1E-5
+                    % give a warn of collision, collision may happen due to
+                    % too large alpha and too large dt
+                    warning("collision happened!");
+                    d_i - R_i
+                end
+            end 
+        end
+
     end
 
     % ======================== centralized safety filtering ========================
@@ -218,12 +339,14 @@ classdef twoOrderModel < handle
                 % get the sensed data of agent i
                 p_i = globalSenseMat(i, 1:3)';
                 v_i = globalSenseMat(i, 4:6)';
+                f_i = CWModel.getAgentCWf(p_i, v_i); % get the drifting part of the dynamics of the sensed object
                 r_i = globalSenseMat(i, 7);
 
                 for j = i+1:N
                     % get the sensed data of agent j
                     p_j = globalSenseMat(j, 1:3)';
                     v_j = globalSenseMat(j, 4:6)';
+                    f_j = CWModel.getAgentCWf(p_j, v_j); % get the drifting part of the dynamics of the sensed object
                     r_j = globalSenseMat(j, 7);
                     R = r_i + r_j;
                     
@@ -239,9 +362,10 @@ classdef twoOrderModel < handle
                     CBFconsA(0.5*(i-1)*(2*N-i) + j-i, (i-1)*3+1:(i-1)*3+3) = -n_hat_ij; % for agent i and block i
                     CBFconsA(0.5*(i-1)*(2*N-i) + j-i, (j-1)*3+1:(j-1)*3+3) = n_hat_ij; % for agent j and block j
                     % right hand side
-                    CBFconsb(0.5*(i-1)*(2*N-i) + j-i) = (twoOrderModel.alpha1_c + twoOrderModel.alpha2_c) * n_hat_ij' * v_ij ...
-                                                        + twoOrderModel.alpha1_c*twoOrderModel.alpha2_c* (d_ij - R) ...
-                                                        + 1/d_ij * (v_ij'*v_ij - n_hat_ij'*v_ij * n_hat_ij'*v_ij);
+                    CBFconsb(0.5*(i-1)*(2*N-i) + j-i) = (CWModel.alpha1_c + CWModel.alpha2_c) * n_hat_ij' * v_ij ...
+                                                        + CWModel.alpha1_c*CWModel.alpha2_c* (d_ij - R) ...
+                                                        + 1/d_ij * (v_ij'*v_ij - n_hat_ij'*v_ij * n_hat_ij'*v_ij) ...
+                                                        + n_hat_ij' * (f_i - f_j);
 
                     if d_ij < R - 1E-5
                         % give a warn of collision, collision may happen due to
@@ -257,12 +381,12 @@ classdef twoOrderModel < handle
             % s.t. CBFconsA * U <= CBFconsb
             H = 2*eye(3*N); % quadratic term
             f = -2*U_ref; % linear term
-            [U_safe, modifValue, exitflag] = quadprog(H, f, CBFconsA, CBFconsb, [], [], [], [], [], twoOrderModel.quadopt); % solve the quadratic programming problem
+            [U_safe, modifValue, exitflag] = quadprog(H, f, CBFconsA, CBFconsb, [], [], [], [], [], CWModel.quadopt); % solve the quadratic programming problem
 
             % if the QP fails, use the minimum invasive result
             if exitflag < 0
                 warning("QP error, using minimum invasive result")
-                U_safe = twoOrderModel.minmaxlinear(CBFconsA, CBFconsb); 
+                U_safe = CWModel.minmaxlinear(CBFconsA, CBFconsb); 
             end
         end
     end
@@ -308,19 +432,19 @@ classdef twoOrderModel < handle
                     % TODO: do QP to optimize the privilege matrix
                     Acons = zeros(4, 1);
                     bcons = zeros(4, 1);
-                    Acons(1) =  - ( twoOrderModel.alpha1_c*twoOrderModel.alpha2_c * (d_ij - R) + 1/d_ij * (v_ij'*v_ij - n_hat_ij'*v_ij * n_hat_ij'*v_ij) );
-                    Acons(2) = ( twoOrderModel.alpha1_c*twoOrderModel.alpha2_c * (d_ij - R) + 1/d_ij * (v_ij'*v_ij - n_hat_ij'*v_ij * n_hat_ij'*v_ij) );
+                    Acons(1) =  - ( CWModel.alpha1_c*CWModel.alpha2_c * (d_ij - R) + 1/d_ij * (v_ij'*v_ij - n_hat_ij'*v_ij * n_hat_ij'*v_ij) );
+                    Acons(2) = ( CWModel.alpha1_c*CWModel.alpha2_c * (d_ij - R) + 1/d_ij * (v_ij'*v_ij - n_hat_ij'*v_ij * n_hat_ij'*v_ij) );
                     Acons(3) = -1;
                     Acons(4) = 1;
-                    bcons(1) = n_hat_ij'*u_sci + (twoOrderModel.alpha1_c + twoOrderModel.alpha2_c) * n_hat_ij'*v_i;
-                    bcons(2) = n_hat_ji'*u_scj + (twoOrderModel.alpha1_c + twoOrderModel.alpha2_c) * n_hat_ji'*v_j + twoOrderModel.alpha1_c*twoOrderModel.alpha2_c * (d_ij - R) + 1/d_ij * (v_ij'*v_ij - n_hat_ij'*v_ij * n_hat_ij'*v_ij);
+                    bcons(1) = n_hat_ij'*u_sci + (CWModel.alpha1_c + CWModel.alpha2_c) * n_hat_ij'*v_i;
+                    bcons(2) = n_hat_ji'*u_scj + (CWModel.alpha1_c + CWModel.alpha2_c) * n_hat_ji'*v_j + CWModel.alpha1_c*CWModel.alpha2_c * (d_ij - R) + 1/d_ij * (v_ij'*v_ij - n_hat_ij'*v_ij * n_hat_ij'*v_ij);
                     bcons(3) = 0;
                     bcons(4) = 1;
     
                     % solve the QP problem
                     H = 2*eye(1); % quadratic term
                     f = -2*privilegeMat(i, j); % linear term
-                    [p_ij, modifValue, exitflag] = quadprog(H, f, Acons, bcons, [], [], [], [], [], twoOrderModel.quadopt); % solve the quadratic programming problem
+                    [p_ij, modifValue, exitflag] = quadprog(H, f, Acons, bcons, [], [], [], [], [], CWModel.quadopt); % solve the quadratic programming problem
                     
                     if exitflag >= 0
                         newPrivilegeMat(i,j) = p_ij;
@@ -348,17 +472,18 @@ classdef twoOrderModel < handle
                 % get the sensed data of agent i
                 p_i = senseMat(i, 1:3)';
                 v_i = senseMat(i, 4:6)';
-                agentCell{i} = twoOrderModel(p_i, v_i, Goals(:, i)); % create the agent cell
+                agentCell{i} = CWModel(p_i, v_i, Goals(:, i)); % create the agent cell
                 u_ref = agentCell{i}.getPIDcontrol();
                 U_ref((i-1)*3+1:(i-1)*3+3) = u_ref; % get the reference control
             end
-            U_safe_c = twoOrderModel.centralizedSafeFiltering(U_ref, senseMat);
+            U_safe_c = CWModel.centralizedSafeFiltering(U_ref, senseMat);
 
             privilegeMatArr = privilegeMat2Arr(privilegeMat); % convert the privilege matrix to array, so the optimization has no constraints
 
             % optimized the privilege matrix
-            % newPrivilegeMat = fmincon(@getU_diff, privilegeMat, [], [], [], [], zeros(N, N), ones(N, N), @nonlcon, twoOrderModel.fminconopt);
-            newPrivilegeMatArr = fminunc(@getU_diff, privilegeMatArr, twoOrderModel.fminuncopt); % optimize the privilege matrix
+            % newPrivilegeMat = fmincon(@getU_diff, privilegeMat, [], [], [], [], zeros(N, N), ones(N, N), @nonlcon, CWModel.fminconopt);
+            newPrivilegeMatArr = fminunc(@getU_diff, privilegeMatArr, CWModel.fminuncopt); % optimize the privilege matrix
+            % newPrivilegeMatArr = fminsearch(@getU_diff, privilegeMatArr, CWModel.fminsearchopt); % optimize the privilege matrix with gradient-free method
 
             newPrivilegeMat = arr2privilegeMat(newPrivilegeMatArr); % convert the array to privilege matrix
 
@@ -366,20 +491,24 @@ classdef twoOrderModel < handle
                 % get the difference of safety output with the given privilege matrix as variable
                 % convert the array to privilege matrix
                 PrivMat = arr2privilegeMat(PrivMatArr);
-                U_safe_d = getDecentralizedU(PrivMat);
-                U_diff = norm(U_safe_d - U_safe_c);
+                [U_safe_d, n_notfeas] = getDecentralizedU(PrivMat);
+                U_diff = norm(U_safe_d - U_safe_c) + 1E5*n_notfeas; % add penalty for not feasible case
             end
 
-            function U_safe_d = getDecentralizedU(PrivMat)
+            function [U_safe_d, n_notfeas] = getDecentralizedU(PrivMat)
                 % get the decentralized safety output with the given privilege matrix as variable
                 U_safe_d = zeros(N*3, 1);
+                n_notfeas = 0;
                 for j = 1:N
                     senseMatAgentj = senseMat((1:length(agentCell)~=j), :);
                     u = U_ref((j-1)*3+1:(j-1)*3+3); % reference control
-                    privilegeArray = PrivMat(:, j);
+                    privilegeArray = PrivMat(j, :);
                     privilegeArray(j) = [];
-                    u_safe = agentCell{j}.distributedSafeFiltering(u, senseMatAgentj, privilegeArray);
+                    [u_safe, isQPfeasible] = agentCell{j}.distributedSafeFiltering(u, senseMatAgentj, privilegeArray');
                     U_safe_d((j-1)*3+1:(j-1)*3+3) = u_safe;
+                    if ~isQPfeasible
+                        n_notfeas = n_notfeas + 1;
+                    end
                 end
             end
 
@@ -436,7 +565,7 @@ classdef twoOrderModel < handle
                 % get the sensed data of agent i
                 p_i = senseMat(i, 1:3)';
                 v_i = senseMat(i, 4:6)';
-                agentCell{i} = twoOrderModel(p_i, v_i, Goals(:, i)); % create the agent cell
+                agentCell{i} = CWModel(p_i, v_i, Goals(:, i)); % create the agent cell
                 u_ref = agentCell{i}.getPIDcontrol();
                 U_ref((i-1)*3+1:(i-1)*3+3) = u_ref; % get the reference control
             end
@@ -444,8 +573,8 @@ classdef twoOrderModel < handle
             privilegeMatArr = privilegeMat2Arr(privilegeMat); % convert the privilege matrix to array, so the optimization has no constraints
 
             % optimized the privilege matrix
-            % newPrivilegeMat = fmincon(@getU_diff, privilegeMat, [], [], [], [], zeros(N, N), ones(N, N), @nonlcon, twoOrderModel.fminconopt);
-            newPrivilegeMatArr = fminunc(@getU_diff, privilegeMatArr, twoOrderModel.fminuncopt); % optimize the privilege matrix
+            % newPrivilegeMat = fmincon(@getU_diff, privilegeMat, [], [], [], [], zeros(N, N), ones(N, N), @nonlcon, CWModel.fminconopt);
+            newPrivilegeMatArr = fminunc(@getU_diff, privilegeMatArr, CWModel.fminuncopt); % optimize the privilege matrix
 
             newPrivilegeMat = arr2privilegeMat(newPrivilegeMatArr); % convert the array to privilege matrix
 
@@ -463,9 +592,9 @@ classdef twoOrderModel < handle
                 for j = 1:N
                     senseMatAgentj = senseMat((1:length(agentCell)~=j), :);
                     u = U_ref((j-1)*3+1:(j-1)*3+3); % reference control
-                    privilegeArray = PrivMat(:, j);
+                    privilegeArray = PrivMat(j, :);
                     privilegeArray(j) = [];
-                    u_safe = agentCell{j}.distributedSafeFiltering(u, senseMatAgentj, privilegeArray);
+                    u_safe = agentCell{j}.distributedSafeFiltering(u, senseMatAgentj, privilegeArray');
                     U_safe_d((j-1)*3+1:(j-1)*3+3) = u_safe;
                 end
             end
@@ -516,6 +645,7 @@ classdef twoOrderModel < handle
         quadopt = optimoptions("quadprog", "Display", "off");
         fminconopt = optimoptions("fmincon", "Display", "off");
         fminuncopt = optimoptions("fminunc", "Display", "off");
+        fminsearchopt = optimset('Display','off');
     end
 
     methods (Static)

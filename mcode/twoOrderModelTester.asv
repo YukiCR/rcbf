@@ -14,7 +14,7 @@ v_init = [0;0;0];
 r = 30;
 z1 = 10;
 z2 = -10;
-n_agent = 8;
+n_agent = 6;
 theta = linspace(0, 2*pi, n_agent/2 + 1);
 theta(end) = [];
 p1 = [r*cos(theta); r*sin(theta); ones(1, n_agent/2) * z1];
@@ -164,7 +164,7 @@ agent2 = twoOrderModel(target, v_init, p_init + [0;0.01;0]);
 agentCell = {agent1, agent2};
 
 % set the privilege matrix
-privilege = [0.3; 0.7];
+privilege = [0.5; 0.5];
 
 
 % 1 for distributed, 2 for centralized
