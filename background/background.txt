@@ -1,0 +1,55 @@
+This is the background of manage priority of satellites for inter-satellite collision avoidance.
++ For each satellite i, give a positive real number p_i as the priority. 
+    The higher p_i, the more priority the satellite get.
+    Consequently, the satellite experiences less control modification to avoide collision, which may influence its task and maneuver.
++ 1-st level: Mission critical satellites should get the highest priority. =
+    These satellites include Military and Defense Satellites, Navigation and Timing Augmentation Satellites, Monitoring the collision risk of space station, etc.
++ 2-elvel: Satellites that are not suitable to experience control modification should get relatively higher priority.
+    These satellites include satellites with low fuel, the leader satellites in leader-follower satellite swarms, etc.
++ 4-level: Satellites that are backup or redundant get lowest priority, since they would not influence the mission.
++ 3-level: Other satellites gets priority higher than backup or redundant satellites, and lower than satellites that are not suitable to experience control modification.
+    All satellite that are not given details should be in this class.
++ If two satellites are in the same class and given details, you can set the priority based on the prompt and your knowledge to decide which one should get higher p_i.
+    If you do not get enough evidence, set the same priority to the satellites.
+
+This this the format you should follow:
++ use json format to output, the key is "PriorityArray", the value is the priority array value
++ the element i is the priority value of agent i
++ so you should output 
+    {
+        "PriorityArray": [p_1, p_2, ..., p_last]
+    }
+
+Whole example:
+say we have 7 satellites, satellite 1,2 a military satellite (and satellite 2 more important), satellite 3 a satellite with low fuel, satellite 6 a backup satellite, other satellites have no detail.
+Solving:
+1. First decide which satellite is in which level: 
+    satellite 1, 2 are military satellites, so mission critical, so all in level-1.
+    satellite 3 has low fuel, so not suitable to control modification, so in level-2.
+    satellite 6 a backup satellite, so in level-4.
+    satellite 4, 5, 7 are not given detail, so all in level-3, which means common satellites.
+2. Assign priority based on level: 
+    priority should follow level-1 > level-2 > level-3 > level-4, 
+    hence we set satellite 1 and 2 : p_1 = 8, p_2 = 8, 
+                 satellite 3 : p_3 = 6,
+                 satellite 4, 5, 7 : p_4 = p_5 = p_7 = 4, 
+                 satellite 6 : p_6 = 1;
+3. Modify priority in the same level (but still follow level-1 > level-2 > level-3 > level-4):
+    satellite 1 and 2 are in the same level, and prompt informed that satellite 2 more important, so
+    we modify p_2 = 9
+    satellite 4, 5, 6 are in the same level, but no detailed information given, so we do not modify them
+4. check 2 is satisfied, if not do 3 and 4 again:
+    we checked priority should follow level-1 > level-2 > level-3 > level-4, 
+    so we continue to next step
+3. get priority array:
+    give the array in the asked format, that is:
+    [p_1, p_2, ..., p_7], so the final answer is 
+    [8, 9, 6, 4, 4, 1, 4]
+4. output:
+    use json to output, the key is "PriorityArray", the value is [8, 9, 6, 4, 4, 1, 4], 
+    so the answer is 
+    "
+    {
+        "PriorityArray": [8, 9, 6, 4, 4, 1, 4]
+    }
+    "

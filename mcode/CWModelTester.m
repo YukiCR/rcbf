@@ -14,7 +14,7 @@ v_init = [0;0;0];
 r = 30;
 z1 = 10;
 z2 = -10;
-n_agent = 12;
+n_agent = 16;
 theta = linspace(0, 2*pi, n_agent/2 + 1);
 theta(end) = [];
 p1 = [r*cos(theta); r*sin(theta); ones(1, n_agent/2) * z1];
@@ -31,14 +31,14 @@ end
 privilegeMat = (ones(n_agent) - eye(n_agent)) * 0.5;
 
 % give large priority for agent 1
-for i=2:n_agent
-    privilegeMat(1,i) = 0.9;
-    privilegeMat(i,1) = 0.1;
-end
+% for i=2:n_agent
+%     privilegeMat(1,i) = 0.9;
+%     privilegeMat(i,1) = 0.1;
+% end
 
 % 1 for distributed with fixed P, 2 for centralized, 3 for distributed with optimized P,
 % 4 for distributed assuming other agents are not controlled
-form = 1;
+form = 3;
 
 modif = 0;
 switch form
