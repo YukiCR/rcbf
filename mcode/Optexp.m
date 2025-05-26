@@ -14,7 +14,7 @@ v_init = [0;0;0];
 r = 30;
 z1 = 10;
 z2 = -10;
-n_agent = 16;
+n_agent = 10;
 theta = linspace(0, 2*pi, n_agent/2 + 1);
 theta(end) = [];
 p1 = [r*cos(theta); r*sin(theta); ones(1, n_agent/2) * z1];
@@ -38,7 +38,7 @@ privilegeMat = (ones(n_agent) - eye(n_agent)) * 0.5;
 
 % 1 for distributed with fixed P, 2 for centralized, 3 for distributed with optimized P,
 % 4 for distributed assuming other agents are not controlled
-form = 3;
+form = 2;
 
 modif = 0;
 switch form
@@ -58,7 +58,7 @@ switch form
                 privilegeArray(j) = [];
                 u_safe = agentCell{j}.distributedSafeFiltering(u, senseMatAgentj, privilegeArray');
                 U_safe((j-1)*3+1:(j-1)*3+3) = u_safe;
-                agentCell{j}.stepForward(u_safe);
+                % agentCell{j}.stepForward(u_safe);
 
                 modif = modif + norm(u - u_safe);
             end
