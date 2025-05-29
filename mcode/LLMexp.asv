@@ -49,7 +49,7 @@ formatStruct = struct("PriorityArray", ones(1, n_agent));
 %% get priority assignment form LLM
 
 % the question to LLM
-form = 3;
+form = 2;
 
 switch form
     case 1

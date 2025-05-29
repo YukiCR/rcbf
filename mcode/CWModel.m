@@ -679,18 +679,32 @@ classdef CWModel < handle
     %% visualization related
 
     methods 
-        function plotHistory(obj, stepInterval)
+        function plotHistory(obj, varargin)
             %plotHistory plot the history of the system with 3D quiver arrows
             %   plotHistory(obj, stepInterval) plots the trajectory of the system
             %   in 3D space with velocity vectors. stepInterval specifies the
             %   interval at which arrows are plotted (default is 30).
     
-            if nargin < 2
-                stepInterval = 40; % Default interval for plotting arrows
-            end
+            % Define default values
+            defaultStepInterval = 3;
+            defaultColor = [];
+
+            % Set up input parser
+            ip = inputParser;
+            addParameter(ip, 'stepInterval', defaultStepInterval, @(x) isscalar(x) && x > 0);
+            addParameter(ip, 'color', defaultColor, @(x) isempty(x) || (isnumeric(x) && numel(x) == 3));
+            parse(ip, varargin{:});
+
+            % Extract parameters
+            stepInterval = ip.Results.stepInterval;
+            color = ip.Results.color;
     
             % Plot the trajectory
-            p = plot3(obj.history(:, 1), obj.history(:, 2), obj.history(:, 3), 'LineWidth', 1.5, 'LineStyle', '--');
+            p = plot3(obj.history(:, 1), obj.history(:, 2), obj.history(:, 3), 'LineWidth', 1.5, 'LineStyle', 'none');
+
+            if ~isempty(color)
+                p.Color = color; % Set the color of the trajectory
+            end
     
             % Prepare data for quiver arrows
             xs = obj.history(1:stepInterval:end, 1);
@@ -699,12 +713,31 @@ classdef CWModel < handle
             vxs = obj.history(1:stepInterval:end, 4);
             vys = obj.history(1:stepInterval:end, 5);
             vzs = obj.history(1:stepInterval:end, 6);
+
+            % plot the trajectory with scatters
+            s = scatter3(xs, ys, zs);
+            s.Marker = "o";
+            s.SizeData = 15;
+            s.MarkerFaceColor = "flat";
+            s.MarkerEdgeColor = "flat";
+            s.AlphaDataMapping = "scaled";
+            s.MarkerFaceColor = p.Color;
+            s.MarkerEdgeColor = p.Color;
+            s.MarkerFaceAlpha = 0.20;
+            s.MarkerEdgeAlpha = 0.20;
+   
+            quiverMultiplier = 12;
+            vnorm = (vxs.^2 + vys.^2 + vzs.^2).^(0.5);
+            vxs = vxs./vnorm * quiverMultiplier;
+            vys = vys./vnorm * quiverMultiplier;
+            vzs = vzs./vnorm * quiverMultiplier;
     
             % Plot velocity vectors using quiver3
-            % quiver3(xs, ys, zs, vxs, vys, vzs, 'AutoScale', 'on', 'Color', p.Color, 'LineWidth', 1.5, 'AutoScaleFactor', 1.2, 'MaxHeadSize', 20);
+            quiver3(xs(1:2), ys(1:2), zs(1:2), vxs(1:2), vys(1:2), vzs(1:2), 'filled', 'AutoScale', 'off', 'Color', p.Color, 'LineWidth', 2.0, 'MaxHeadSize', 30, 'LineStyle','-');
     
-            % Highlight the target position
-            plot3(obj.target(1), obj.target(2), obj.target(3), 'Marker', 'pentagram',  'MarkerSize', 10, 'LineWidth', 2, 'Color', p.Color);
+            % Highlight the target position if goal is arrived
+            plot3(obj.target(1), obj.target(2), obj.target(3), 'Marker', 'pentagram',  'MarkerSize', 10, 'LineWidth', 2, 'Color', p.Color, 'LineStyle', 'none');
+            % plot3(obj.history(1,1), obj.history(1,2), obj.history(1,3)-5, 'Marker', '^',  'MarkerSize', 5, 'LineWidth', 2, 'Color', p.Color);
    
         end
     end

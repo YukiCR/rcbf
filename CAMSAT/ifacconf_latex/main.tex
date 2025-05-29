@@ -7,12 +7,37 @@
 \documentclass{ifacconf}
 
 \usepackage{graphicx}      % include this line if your document contains figures
+\usepackage{subfig}
 \usepackage{natbib}        % required for bibliography
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{enumitem}
+\usepackage{balance} % better balance in practice
+
+% --- use the following code to use hyperref with ifacconf ---
+% see also: https://tex.stackexchange.com/questions/393690/illegal-unit-of-measure-error-when-using-hyperref-in-the-ifacconf-class
+\makeatletter
+\let\old@ssect\@ssect % Store how ifacconf defines \@ssect
+\makeatother
+
+\usepackage{hyperref}
+
+\makeatletter
+\def\@ssect#1#2#3#4#5#6{%
+  \NR@gettitle{#6}% Insert key \nameref title grab
+  \old@ssect{#1}{#2}{#3}{#4}{#5}{#6}% Restore ifacconf's \@ssect
+}
+\makeatother
+% --- end of hyperref ---
+
+\newtheorem{definition}{Definition}
+\newtheorem{asmp}{Theorem}
+\newtheorem{assumption}[asmp]{Assumption}
 %===============================================================================
 \begin{document}
 \begin{frontmatter}
 
-\title{Distributed Multi-satellite Collision Avoidance with Tunable Priority via Control Barrier Functions} 
+\title{Integrating High-Level Decisions with Distributed Safey Filter for Multi-Satellite Collision Avoidance} 
 % Title, preferably not more than 10 words.
 
 \thanks[footnoteinfo]{Sponsor and financial support acknowledgment
@@ -31,13 +56,22 @@ letters, not all uppercase.}
    Seoul National University, Seoul, Korea, (e-mail: author@snu.ac.kr)}
 
 \begin{abstract}                % Abstract of 50--100 words
-   Miniaturization and clustering exacerbate collision risk of future satellites.
-   In this paper, we propose a distributed framework for inter-satellite collision avoidance with tunable priority.
-   We first deduce the collision-free condition of multi-satellite systems based on High Order Control Barrier Function techniques. 
-   We then decouple such a condition for respective satellites, and further encode safety on the nominal controller in the form of distributed safety filter.
-   By introducing priority parameter in the safety filter, the responsibility of evading collisions between satellite pairs becomes tunable, making it possible to modify the swarm behavior.
-   Based on such a mechanism, we further showcase the safety filter's ability to cooperate with high level decisions: cooperating with optimization to approximate global optimal behavior and cooperating with Large Language Models to accommodate to tasks, respectively.
-   Theoretical analysis have proved the safety guarantee of the safety filter and numerical Experiments validated the effectiveness of proposed method.
+   % Miniaturization and clustering exacerbate collision risk of future satellites.
+   % In this paper, we propose a distributed framework for inter-satellite collision avoidance with tunable priority.
+   % We first deduce the collision-free condition of multi-satellite systems based on High Order Control Barrier Function techniques. 
+   % We then decouple such a condition for respective satellites, and further encode safety on the nominal controller in the form of distributed safety filter.
+   % By introducing priority parameter in the safety filter, the responsibility of evading collisions between satellite pairs becomes tunable, making it possible to modify the swarm behavior.
+   % Based on such a mechanism, we further showcase the safety filter's ability to cooperate with high level decisions: cooperating with optimization to approximate global optimal behavior and cooperating with Large Language Models to accommodate to tasks, respectively.
+   % Theoretical analysis have proved the safety guarantee of the safety filter and numerical Experiments validated the effectiveness of proposed method.
+
+   Satellite miniaturization and dense constellation deployments exacerbate collision risks in future orbital operations. 
+   While numerous collision avoidance strategies have been proposed, few reconcile agent-level safety with mission-level efficiency.
+   In this paper, we propose a distributed framework for inter-satellite collision avoidance that embeds high-level tuned priorities at the agent level.
+   First, we formulate safety constraints for individual satellites and enforce these constraints on their nominal controllers through distributed safety filters.
+   This establishs collision-free coordination between satellite paris via a  ``safe protocol''.
+   By introducing tunable priority parameters within the safety filter, collision evasion responsibilities become dynamically adjustable, enabling swarm behavior adaptation. 
+   We further demonstrate two methods to integrate with high-level decisions: cooperating with optimization to approximate global reference behaviors and cooperating with Large Language Models to accommodate to tasks, respectively.
+   Theoretical analysis proves the safety guarantees, while numerical experiments validate the framework's efficacy.
 \end{abstract}
 
 \begin{keyword}
@@ -64,8 +98,97 @@ Page limits may vary from conference to conference. Please observe the
 page limits of the event for which your paper is intended. \cite{Abl:56}
 
 \section{Preliminaries}
+\par We review High Order Control Barrier Function here, which is the fundamental technique in this paper.
+
+Consider a general continuous time control-affine system
+\begin{equation} \label{eqn:system}
+  \dot{\boldsymbol{x}} = \boldsymbol{f}(\boldsymbol{x}) + \boldsymbol{g}(\boldsymbol{x}) \boldsymbol{u} ,
+\end{equation}
+where $x \in \mathcal{X} \subset \mathbb{R}^n$ is the state and $u \in \mathcal{U} \subset \mathbb{R}^m$ is the system input. $\boldsymbol{f}$ and $\boldsymbol{g}$ are locally Lipschitz continuous functions. The high order control barrier function is defined as follows.
+
+\begin{definition}\label{def:HOCBF}
+   Given a system (\ref{eqn:system}) with relative degree $r_b$ and $r_b$-th order differentiable function $h(\boldsymbol{x})$, define a series of functions $\Psi_r, r = 0, \dots, r_b$ recursively as
+   \begin{equation} \label{eqn:cbfRecursive}
+     \begin{aligned}
+       \Psi_0 &= h(\boldsymbol{x}), \\
+       \Psi_k &= \dot{\Psi}_{k-1} + \alpha_k\left( \Psi_{k-1}(\boldsymbol{x}) \right), k = 1,\dots,r_b,
+     \end{aligned}
+   \end{equation}
+   where $\alpha_k(\cdot)$ are extended class $\mathcal{K}_{\infty}$ functions \footnotemark. 
+   
+   \par The zero-superlevel set of these defined functions are
+   \footnotetext{A continuous function $\alpha$ : $\mathbb{R} \to \mathbb{R}$ is an extended class $\mathcal{K}_{\infty}$ function if $\alpha(0) = 0$ and $\lim_{x\to \pm \infty}(x) = \pm \infty$.}
+   \begin{equation}
+     \mathfrak{S}_r = \left\{ \boldsymbol{x} \in \mathbb{R}^n \mid \Psi_r(\boldsymbol{x}) \ge 0 \right\}, r = 0,\dots,r_b.
+   \end{equation}
+   $h$ is a \textit{High Order Control Barrier Function (HOCBF)} for system (\ref{eqn:system}), if there exists extended class $\mathcal{K}_{\infty}$ functions $\alpha_1, \dots, \alpha_{r_b}$ such that
+   \begin{equation} \label{eqn:cbfConstraint}
+     \Psi_{r_b}(\boldsymbol{x}) \ge 0
+   \end{equation}
+   stands for any $(\boldsymbol{x},t) \in \mathfrak{S} \times [0,\infty]$, where $\mathfrak{S} = \bigcap_{r = 0}^{r_b} \mathfrak{S}_r$. 
+
+\end{definition}
+
+\begin{thm}[\cite{HOCBFxiaowei}]
+   \par Following the definitions in Definition \ref{def:HOCBF}, once $h$ is a HOCBF for system (\ref{eqn:system}), $\mathfrak{S}$ would be a \textit{forward invariant set} for the system, i.e., $\boldsymbol{x}(0) \in \mathfrak{S}, \boldsymbol{x}(t) \in \mathfrak{S}, \forall t > 0$.
+\end{thm}
 
 \section{Problem Formulation}
+\subsection{System Modelling}
+\par We consider $N$ satellite agents whose dynamics governed by Clohessy-Wiltshire equantions \cite[]{CWequations}.
+The dynamics of agent $i$ in the reference orbit frame is described as
+\begin{equation}
+   \dot{\boldsymbol{x}}_i = 
+      \begin{bmatrix}
+         \dot{\boldsymbol{p}}_i \\ \dot{\boldsymbol{v}}_i
+      \end{bmatrix} = 
+      \begin{bmatrix}
+         \boldsymbol{v}_i \\ \boldsymbol{f}_{vi}
+      \end{bmatrix} + 
+      \begin{bmatrix}
+         \boldsymbol{0} \\ E
+      \end{bmatrix} \boldsymbol{u}_i,
+\end{equation}
+and
+\begin{equation}
+   \boldsymbol{f}_{vi} = 
+      \begin{bmatrix}
+         -2 \omega v_{yi} \\
+         2\omega v_{xi} + 3\omega^2 v_{yi} \\
+         \omega^2 p_{zi}
+      \end{bmatrix},
+\end{equation}
+where $\boldsymbol{p}_i = [p_{xi}~p_{yi}~p_{zi}]^{\top} \in \mathbb{R}^3, \boldsymbol{v} = [v_{xi}~v_{yi}~v_{zi}]^\top \in \mathbb{R}^3$ and $\boldsymbol{u}_i \in \mathbb{R}^3$ are the position, velocity and acceleration of agent $i$, respectively.
+$\boldsymbol{0}$ and $E$ are zero matrix and identity matrix with proper size, and $\omega \in \mathbb{R}$ is the angular velocity of the reference orbit.
+
+\begin{assumption}
+$\boldsymbol{x}_j, j = 1, \dots, N$ and $\omega$ are known for any agent $i, i = 1, \dots, N$ and the high-level decision module.
+\end{assumption}
+\par This assumption is justified since agent $i$ could estimate the state of agent $j$ through relative position estimation techniques \cite[]{XXX}, and the high-level decision module (possibly ground control station or space station) could get these information through observation \cite[]{XXX} or communication.
+
+\subsection{Safety Requirement}
+\par The safety requirement of satellite agents is to keep the safety distance between from each other. 
+Denote $r_i \in \mathbb{R}^+$ to be the safety distance of agent $i$, the safety requirement between agent $i$ and agent $j$ is then keeping the set
+\begin{equation}
+   \mathfrak{S}_{0ij} = \{\boldsymbol{x}_i, \boldsymbol{x}_j \mid d_{ij} = \| \boldsymbol{p}_i - \boldsymbol{p}_j \| \ge R_{ij} = r_i + r_j \}
+\end{equation}
+forward invariant. 
+And the safety requirement of the swarm is to keep 
+\begin{equation}
+   \mathfrak{S}_0 = \bigcap_{i \neq j}\mathfrak{S}_{0ij}, ~i,j = 1, \dots, N
+\end{equation}
+forward invariant.
+
+\subsection{Main Objective}
+\par The main objective of this paper is twofold:
+\begin{enumerate}[label=\arabic*)]
+   \item Ensuring agent-level safety: for each agent $i$, given the local reference control $\boldsymbol{u}_{ri}$ and observation $\boldsymbol{X} = [\boldsymbol{x}_1^{\top}~\dots~\boldsymbol{x}_n^{\top}]^{\top}$, synthesis the safeguarding policy $\boldsymbol{u}_i = \boldsymbol{\pi}_{i}(\boldsymbol{u}_{ri}, \boldsymbol{X})$ to keep $\mathfrak{S}_0$ forward invariant.
+   \item Cooperating with high-level decisions: 
+      \begin{itemize}
+         \item Given the global reference control $\boldsymbol{U}_r = [\boldsymbol{u}_{gr1}^{\top}~\dots~\boldsymbol{u}_{grn}]^\top$, tune $\boldsymbol{\pi}_i, i = 1, \dots, N$ to approximate $\boldsymbol{U}_r$ with $\boldsymbol{U} = [\boldsymbol{u}_1^\top~\dots~\boldsymbol{u}_N^\top]^\top$.
+         \item Given the mission discribed with nature language, tune $\boldsymbol{\pi}_i, i = 1, \dots, N$ to adjust the collision evasion responsibily of agent $i$ based on its mission-level importance. 
+      \end{itemize}
+\end{enumerate}
 
 \section{Distributed Safety Filter Design}
 
@@ -84,7 +207,7 @@ or suggest applications and extensions.
 Place acknowledgments here.
 \end{ack}
 
-\bibliography{ifacconf}             % bib file to produce the bibliography
+\bibliography{ref}             % bib file to produce the bibliography
                                                      % with bibtex (preferred)
 
 \end{document}
