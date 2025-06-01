@@ -66,9 +66,8 @@ letters, not all uppercase.}
 
    Satellite miniaturization and dense constellation deployments exacerbate collision risks in future orbital operations. 
    While numerous collision avoidance strategies have been proposed, few reconcile agent-level safety with mission-level efficiency.
-   In this paper, we propose a distributed framework for inter-satellite collision avoidance that embeds high-level tuned priorities at the agent level.
-   First, we formulate safety constraints for individual satellites and enforce these constraints on their nominal controllers through distributed safety filters.
-   This establishs collision-free coordination between satellite paris via a  ``safe protocol''.
+   In this paper, we propose a distributed inter-satellite collision avoidance framework embeded with high-level tuned priorities.
+   First, we formulate ``safe protocol'' constraints between satellite pairs and enforce these constraints on their nominal controllers through distributed safety filters, which establishs collision-free coordination of the whole swarm.
    By introducing tunable priority parameters within the safety filter, collision evasion responsibilities become dynamically adjustable, enabling swarm behavior adaptation. 
    We further demonstrate two methods to integrate with high-level decisions: cooperating with optimization to approximate global reference behaviors and cooperating with Large Language Models to accommodate to tasks, respectively.
    Theoretical analysis proves the safety guarantees, while numerical experiments validate the framework's efficacy.
@@ -182,15 +181,25 @@ forward invariant.
 \subsection{Main Objective}
 \par The main objective of this paper is twofold:
 \begin{enumerate}[label=\arabic*)]
-   \item Ensuring agent-level safety: for each agent $i$, given the local reference control $\boldsymbol{u}_{ri}$ and observation $\boldsymbol{X} = [\boldsymbol{x}_1^{\top}~\dots~\boldsymbol{x}_n^{\top}]^{\top}$, synthesis the safeguarding policy $\boldsymbol{u}_i = \boldsymbol{\pi}_{i}(\boldsymbol{u}_{ri}, \boldsymbol{X})$ to keep $\mathfrak{S}_0$ forward invariant.
+   \item Ensuring agent-level safety: for each agent $i$, given the local reference control $\boldsymbol{u}_{ri}$ and observation $\boldsymbol{X} = [\boldsymbol{x}_1^{\top}~\dots~\boldsymbol{x}_n^{\top}]^{\top}$, synthesis the safeguarding policy $\boldsymbol{u}_i = \boldsymbol{\pi}_{i}(\boldsymbol{u}_{ri}, \boldsymbol{X})$ to keep $\mathfrak{S}_0$ forward invariant for the swarm through control $\boldsymbol{U} = [\boldsymbol{u}_1^\top~\dots~\boldsymbol{u}_N^\top]^\top$.
    \item Cooperating with high-level decisions: 
       \begin{itemize}
-         \item Given the global reference control $\boldsymbol{U}_r = [\boldsymbol{u}_{gr1}^{\top}~\dots~\boldsymbol{u}_{grn}]^\top$, tune $\boldsymbol{\pi}_i, i = 1, \dots, N$ to approximate $\boldsymbol{U}_r$ with $\boldsymbol{U} = [\boldsymbol{u}_1^\top~\dots~\boldsymbol{u}_N^\top]^\top$.
+         \item Given the global reference control $\boldsymbol{U}_r = [\boldsymbol{u}_{gr1}^{\top}~\dots~\boldsymbol{u}_{grn}]^\top$, tune $\boldsymbol{\pi}_i, i = 1, \dots, N$ to approximate $\boldsymbol{U}_r$ with $\boldsymbol{U}$.
          \item Given the mission discribed with nature language, tune $\boldsymbol{\pi}_i, i = 1, \dots, N$ to adjust the collision evasion responsibily of agent $i$ based on its mission-level importance. 
       \end{itemize}
 \end{enumerate}
 
 \section{Distributed Safety Filter Design}
+\par We first introduce the ``safe protocol'' constraint formulation, then give the distributed safety filter design based on the ``safe protocol''. 
+
+\par For satellite $i$ and satellite $j$, the ``safe protocol'' set for satellite $i$ with satellite $j$ is 
+\begin{equation}
+   \begin{aligned}
+      \mathcal{S}_{ij} = \{ \boldsymbol{u}_i \mid -\boldsymbol{n}_{ij}^\top \boldsymbol{u}_i \le& -\boldsymbol{n}_{ij}[(\alpha_1 + \alpha_2)\boldsymbol{v}_i + \boldsymbol{f}_i] \\
+      &+ p_{ij}[\alpha_1 \alpha_2 (d_{ij} - R_{ij}) \\
+      &+ \frac{1}{d_{ij}}(\|\boldsymbol{v}_{12}\|^2 - ( \boldsymbol{n}_{12}^{\top}\boldsymbol{v}_{12} )^2 )] \}
+   \end{aligned}
+\end{equation}
 
 \section{Cooperating with high-level decisions}
 
