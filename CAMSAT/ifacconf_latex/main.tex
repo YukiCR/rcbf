@@ -33,6 +33,8 @@
 \newtheorem{definition}{Definition}
 \newtheorem{asmp}{Theorem}
 \newtheorem{assumption}[asmp]{Assumption}
+
+\DeclareMathOperator*{\argmin}{arg\,min}
 %===============================================================================
 \begin{document}
 \begin{frontmatter}
@@ -128,7 +130,7 @@ where $x \in \mathcal{X} \subset \mathbb{R}^n$ is the state and $u \in \mathcal{
 
 \end{definition}
 
-\begin{thm}[\cite{HOCBFxiaowei}]
+\begin{thm}[\cite{HOCBFxiaowei}] \label{thm:HOCBF}
    \par Following the definitions in Definition \ref{def:HOCBF}, once $h$ is a HOCBF for system (\ref{eqn:system}), $\mathfrak{S}$ would be a \textit{forward invariant set} for the system, i.e., $\boldsymbol{x}(0) \in \mathfrak{S}, \boldsymbol{x}(t) \in \mathfrak{S}, \forall t > 0$.
 \end{thm}
 
@@ -136,7 +138,7 @@ where $x \in \mathcal{X} \subset \mathbb{R}^n$ is the state and $u \in \mathcal{
 \subsection{System Modelling}
 \par We consider $N$ satellite agents whose dynamics governed by Clohessy-Wiltshire equantions \cite[]{CWequations}.
 The dynamics of agent $i$ in the reference orbit frame is described as
-\begin{equation}
+\begin{equation} \label{eqn:dynamics1}
    \dot{\boldsymbol{x}}_i = 
       \begin{bmatrix}
          \dot{\boldsymbol{p}}_i \\ \dot{\boldsymbol{v}}_i
@@ -149,7 +151,7 @@ The dynamics of agent $i$ in the reference orbit frame is described as
       \end{bmatrix} \boldsymbol{u}_i,
 \end{equation}
 and
-\begin{equation}
+\begin{equation} \label{eqn:dynamics2}
    \boldsymbol{f}_{vi} = 
       \begin{bmatrix}
          -2 \omega v_{yi} \\
@@ -192,14 +194,90 @@ forward invariant.
 \section{Distributed Safety Filter Design}
 \par We first introduce the ``safe protocol'' constraint formulation, then give the distributed safety filter design based on the ``safe protocol''. 
 
-\par For satellite $i$ and satellite $j$, the ``safe protocol'' set for satellite $i$ with satellite $j$ is 
+\par For satellite $i$ and satellite $j$, the ``safe protocol'' set for satellite $i$ corresponding to satellite $j$ is a half-space described as
 \begin{equation}
    \begin{aligned}
-      \mathcal{S}_{ij} = \{ \boldsymbol{u}_i \mid -\boldsymbol{n}_{ij}^\top \boldsymbol{u}_i \le& -\boldsymbol{n}_{ij}[(\alpha_1 + \alpha_2)\boldsymbol{v}_i + \boldsymbol{f}_i] \\
-      &+ p_{ij}[\alpha_1 \alpha_2 (d_{ij} - R_{ij}) \\
-      &+ \frac{1}{d_{ij}}(\|\boldsymbol{v}_{12}\|^2 - ( \boldsymbol{n}_{12}^{\top}\boldsymbol{v}_{12} )^2 )] \}
+      \mathcal{S}_{ij} = \left\{ \boldsymbol{u}_i \mid -\hat{\boldsymbol{n}}_{ij}^\top \boldsymbol{u}_i \le \vphantom{\frac{1}{d_{ij}}} \right. 
+      & \hat{\boldsymbol{n}}_{ij}^{\top} \left[(\alpha_1 + \alpha_2)\boldsymbol{v}_i + \boldsymbol{f}_{vi} \right] \\
+      &+ p_{ij} \left[ \alpha_1 \alpha_2 (d_{ij} - R_{ij}) \vphantom{\frac{1}{d_{ij}}} \right. \\
+      & \left. \left. + \frac{1}{d_{ij}}\left( \|\boldsymbol{v}_{ij}\|^2 - ( \hat{\boldsymbol{n}}_{ij}^{\top}\boldsymbol{v}_{ij} )^2 \right) \right] \right\},
    \end{aligned}
 \end{equation}
+where $\hat{\boldsymbol{n}}_{ij} = (\boldsymbol{p}_i - \boldsymbol{p}_j)/\| \boldsymbol{p}_i - \boldsymbol{p}_j \|$ is the unit vector pointing from agent $j$ to agent $i$, 
+$\alpha_1, \alpha_2 \in \mathbb{R}^{+}$ are positive parameters and 
+$\boldsymbol{v}_{ij} = \boldsymbol{v}_i - \boldsymbol{v}_j$ is the relative velocity between agent $i$ and agent $j$.
+$p_{ij} \in \mathbb{R}$ is the priority parameter, reresenting agent $i$'s priority over agent $j$. 
+
+\par The following result renders that two satellites are collision-free if both of the them follow the ``safety protocol''.
+
+\begin{thm}
+   For systems discribed as (\ref{eqn:dynamics1}) and (\ref{eqn:dynamics2}), $\mathfrak{S}_{0ij}$ is forward invariant if $\boldsymbol{u}_i \in \mathcal{S}_{ij}, \boldsymbol{u}_j \in \mathcal{S}_{ji}$ and $p_{ij} + p_{ji} \le 1$.
+\end{thm}
+\begin{pf}
+The proof mainly leverages Theorem \ref{thm:HOCBF}.
+Let
+\begin{equation}
+    h_{ij} = d_{ij} - R_{ij} = \Psi_{0ij}
+\end{equation}
+be the HOCBF candidate to keep agent $i$ and agent $j$ collision-free.
+By choosing positive proportional functions as class $\mathcal{K}_{\infty}$ functions, it follows the definition that
+\begin{equation}
+\begin{aligned}
+      \Psi_{1ij} =& \dot{\Psi}_{0ij} + \alpha_1 (\Psi_{0ij}) \\
+                 =& \frac{\boldsymbol{p}_i^{\top} - \boldsymbol{p}_j^\top}{d_{ij}} (\boldsymbol{v}_1 - \boldsymbol{v}_2) + \alpha_1 (d_{ij} - R_{ij}) \\
+                 =&  \hat{\boldsymbol{n}}_{ij}^\top \boldsymbol{v}_{ij} + \alpha_1 \cdot \Psi_{0ij}.
+\end{aligned}
+\end{equation}
+To get the constraint on control, we further define
+\begin{equation}
+   \begin{aligned}
+      \Psi_{2ij} =& \dot{\Psi}_{1ij} + \alpha_2 \Psi_{1ij} \\
+                 =& \frac{1}{d_{ij}^2}\left( (\boldsymbol{v}_1 - \boldsymbol{v}_2)^{\top}d_{ij} - (\hat{\boldsymbol{n}}_{ij}^\top \boldsymbol{v}_{ij})(\boldsymbol{p}_1 - \boldsymbol{p}_2)^{\top} \right) \boldsymbol{v}_{ij} \\
+                 &+ \hat{\boldsymbol{n}}_{ij}^\top (\boldsymbol{u}_1 + \boldsymbol{f}_{v1} - \boldsymbol{u}_2 - \boldsymbol{f}_{vj}) + \alpha_1 \hat{\boldsymbol{n}}_{ij}^\top \boldsymbol{v}_{ij} \\
+                 &+ \alpha_2 (\hat{\boldsymbol{n}}_{ij}^\top \boldsymbol{v}_{ij} + \alpha_1 \Psi_{0ij}) \\
+                 =& \hat{\boldsymbol{n}}_{ij}^\top \left(\boldsymbol{u}_1 - \boldsymbol{u}_2 + (\alpha_1 + \alpha_2)\boldsymbol{v}_{ij} + \boldsymbol{f}_{v1} - \boldsymbol{f}_{v2} \right) \\
+                 &+ \frac{1}{d_{ij}} \left( \|\boldsymbol{v}_{ij}\|^2 -  (\hat{\boldsymbol{n}}_{ij}^{\top}\boldsymbol{v}_{ij} )^2 \right) + \alpha_1 \alpha_2 (d_{ij} - R_{ij})
+   \end{aligned}
+\end{equation}
+Given that $\boldsymbol{u}_i \in \mathcal{S}_{ij}$ and $\boldsymbol{u}_j \in \mathcal{S}_{ji}$, by adding up the inequalities in the definition of $\mathcal{S}_{ij}$ and $\mathcal{S}_{ji}$ and substituting $\hat{\boldsymbol{n}}_{ji} = -\hat{\boldsymbol{n}}_{ij}$ into the inequality, one can get
+\begin{equation}
+   \begin{aligned}
+      \tilde{\Psi}_{2ij} =& \hat{\boldsymbol{n}}_{ij}^\top \left(\boldsymbol{u}_1 - \boldsymbol{u}_2 + (\alpha_1 + \alpha_2)\boldsymbol{v}_{ij} + \boldsymbol{f}_{v1} - \boldsymbol{f}_{v2} \right) \\
+      &+ (p_{ij} + p_{ji})\left[ \frac{1}{d_{ij}} \left( \|\boldsymbol{v}_{ij}\|^2 -  (\hat{\boldsymbol{n}}_{ij}^{\top}\boldsymbol{v}_{ij} )^2 \right) \right. \\
+      &+ \left. \alpha_1 \alpha_2 (d_{ij} - R_{ij}) 
+            \vphantom{ \frac{1}{d_{ij}} \left( \|\boldsymbol{v}_{ij}\|^2 -  (\hat{\boldsymbol{n}}_{ij}^{\top}\boldsymbol{v}_{ij} )^2 \right) } 
+         \right] \ge 0
+   \end{aligned}
+\end{equation}
+Notice that $\|\boldsymbol{v}_{ij}\|^2 -  (\hat{\boldsymbol{n}}_{ij}^{\top}\boldsymbol{v}_{ij} )^2  \ge 0$ and $d_{ij} - R_{ij} \ge 0$ stands for $(\boldsymbol{x}_i, \boldsymbol{x}_j) \in \mathfrak{S}_{0ij}$, $\Psi_{2ij} \ge \tilde{\Psi}_{2ij} \ge 0$ then stands for any $p_{ij}$ and $p_{ji}$ satisfying $p_{ij} + p_{ji} \le 1$.
+Consequently, according to Definition \ref{def:HOCBF} and Theorem \ref{thm:HOCBF}, $h_{ij}$ is a valid HOCBF and $\mathfrak{S}_{0ij}$ is then a forward invariant set for agent $i$ and agent $j$.
+\end{pf}
+
+Based on the properties of ``safe protocol'' set, we further design the distributed safeguarding policy in a minimum invasive way as
+\begin{equation}
+   \boldsymbol{\pi}_i(\boldsymbol{u}_{ri}, \boldsymbol{X}) = 
+   \left\{
+   \begin{aligned}
+      &\mathop{\arg \min}_{\boldsymbol{u} \in \cap_{j \neq i} \mathcal{S}_{ij}} \| \boldsymbol{u} - \boldsymbol{u}_{ri} \|^2,    &\cap_{j \neq i} \mathcal{S}_{ij} \neq \varnothing, \\
+      &\mathop{\arg \min}_{\boldsymbol{u} \in \mathbb{R}^3 }\mathop{\max}_{j \neq i} \mathop{\mathrm{ESDF}}(\boldsymbol{u}, \mathcal{S}_{ij}),     &\cap_{j \neq i} \mathcal{S}_{ij} = \varnothing,
+   \end{aligned}
+   \right.
+\end{equation}
+where $\mathop{\mathrm{ESDF}}(\boldsymbol{u}, \mathcal{S}_{ij})$ is the signed Euclidean distance function (ESDF) of $\boldsymbol{u}$ to the boundary of half-space $\mathcal{S}_{ij}$, with $\mathop{\mathrm{ESDF}}(\boldsymbol{u}, \mathcal{S}_{ij})$ defined to be negative if $\boldsymbol{u} \in \mathcal{S}_{ij}$.
+
+\par If $\cap_{j\neq i} \mathcal{S}_{ij} \neq \varnothing$, $\boldsymbol{\pi}_i$ minimumly modifies $\boldsymbol{u}_{ri}$ to follow all ``safety protocols''.
+Since the feasible region $\cap_{j\neq i} \mathcal{S}_{ij}$ is a polytope now, $\boldsymbol{\pi}_i$ is in the form of a quadratic programming (QP) and can be solved in real time onboard; 
+If $\cap_{j\neq i} \mathcal{S}_{ij} = \varnothing$, it is then impossible to follow all ``safety protocols'' for all agent $j, j\neq i$. Therefore, $\boldsymbol{\pi}_i$ synthesises a control that minimizes the maximum violation of all ``safe protocols''.
+Such an optimization can also be solved in real time onboard via a linear programming (LP).
+
+\begin{thm}
+   If $\cap_{j\neq i} \mathcal{S}_{ij} \neq \varnothing$ for all agent $i$, $\mathfrak{S}_0$ is forward invariant if $\boldsymbol{u}_i = \boldsymbol{\pi}_i(\boldsymbol{u}_{ri}, \boldsymbol{X})$ and $p_{ij} + p_{ji} \le 1, \forall i,j = 1, \dots, N, i\neq j$.
+\end{thm}
+\begin{pf}
+   XXXX
+\end{pf}
+
+REMARK: meaning and plot, difference between CBF-QP
 
 \section{Cooperating with high-level decisions}
 
