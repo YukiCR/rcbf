@@ -688,16 +688,19 @@ classdef CWModel < handle
             % Define default values
             defaultStepInterval = 3;
             defaultColor = [];
+            defaultquiverMultiplier = 12;
 
             % Set up input parser
             ip = inputParser;
             addParameter(ip, 'stepInterval', defaultStepInterval, @(x) isscalar(x) && x > 0);
             addParameter(ip, 'color', defaultColor, @(x) isempty(x) || (isnumeric(x) && numel(x) == 3));
+            addParameter(ip, 'quiverMultiplier', defaultquiverMultiplier, @(x) isscalar(x) && x > 0);
             parse(ip, varargin{:});
 
             % Extract parameters
             stepInterval = ip.Results.stepInterval;
             color = ip.Results.color;
+            quiverMultiplier = ip.Results.quiverMultiplier;
     
             % Plot the trajectory
             p = plot3(obj.history(:, 1), obj.history(:, 2), obj.history(:, 3), 'LineWidth', 1.5, 'LineStyle', 'none');
@@ -726,7 +729,6 @@ classdef CWModel < handle
             s.MarkerFaceAlpha = 0.20;
             s.MarkerEdgeAlpha = 0.20;
    
-            quiverMultiplier = 12;
             vnorm = (vxs.^2 + vys.^2 + vzs.^2).^(0.5);
             vxs = vxs./vnorm * quiverMultiplier;
             vys = vys./vnorm * quiverMultiplier;

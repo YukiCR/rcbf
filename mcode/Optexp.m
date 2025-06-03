@@ -308,19 +308,27 @@ CWModel.setgetsteps(N);
 
 p_init = [0;0;0];
 v_init = [0;0;0];
-target = [50;0;0];
+target = [30;0;0];
 
 agent1 = CWModel(p_init, v_init, target);
 agent2 = CWModel(target, v_init, p_init + [0;0.01;0]);
 agentCell = {agent1, agent2};
 
 % set the privilege matrix
-privilege = [0.5; 0.5];
-
+privform = 3;
+switch privform
+    case 1
+        privilege = [0.5; 0.5];
+    case 2
+        privilege = [0.7; 0.3];
+    case 3
+        privilege = [1.0; 0.0];
+end
 
 % 1 for distributed, 2 for centralized
 form = 1;
 
+firstArriveFlag = false;
 modif = 0;
 switch form
     case 1
@@ -344,23 +352,62 @@ switch form
                 u_safe = U_safe((j-1)*3+1:(j-1)*3+3);
                 agentCell{j}.stepForward(u_safe);
             end
+            if norm(agentCell{1}.p - target) < 0.1 && ~firstArriveFlag
+                disp("agent 1 arrived at step " + num2str(i))
+                firstArriveFlag = true;
+            end
         end
 end
-
+% =========== plotting =================
 % plot the state of the system
+labelFontSize = 12;
+legendFontSize = 11;
+width = 5;  
+height = 5;  
+xbound = [-3 33];
+ybound = [-11.5 5.5];
+zbound = [-3.5 3.5];
+
 figure
+
+% set
+colororder("gem12");
+C = colororder;
 
 hold on 
 for i = 1:length(agentCell)
-    agentCell{i}.plotHistory('stepinterval', 8);
+    agentCell{i}.plotHistory("stepInterval", 5, "quiverMultiplier", 5);
 end
 hold off
 
-view(3)
-grid on
+% legend and labels
+legend({'',  '$i$-th trajectory', '$i$-th starting direction', '$i$-th goal'}, 'Interpreter', 'latex','FontSize', legendFontSize, 'Position', [0.60697354264693,0.297012949962734,0.39670016253436,0.123362747366192]);
+xlabel('$x (\mathrm{m})$', 'Interpreter', 'latex', 'FontSize', labelFontSize);
+ylabel('$y (\mathrm{m})$', 'Interpreter', 'latex', 'FontSize', labelFontSize);
+zlabel('$z (\mathrm{m})$', 'Interpreter', 'latex', 'FontSize', labelFontSize);
+
+view(-0.1, 45)
 axis equal
-xlim([0 50])
-ylim([-20 20])
-zlim([-20 20])
+xlim(xbound)
+ylim(ybound)
+zlim(zbound)
+
+% axes settigs
+ax = gca;
+ax.Box = "off";
+ax.XLim = xbound;
+ax.XGrid = "on";
+ax.YGrid = "on";
+ax.ZGrid = "on";
+ax.FontSizeMode = 'manual';   % disable auto zoom
+ax.FontSize = labelFontSize;
+ax.FontName = "Times New Roman";
+ax.XAxis.FontName = "Times New Roman";
+ax.YAxis.FontName = "Times New Roman";
+ax.ZAxis.FontName = "Times New Roman";
+
+set(gca, 'LooseInset', [0 0 0 0])
+fig = gcf;
+set(fig, 'Units', 'inches', 'Position', [1, 1, width, height]);
 
 clear CWModel

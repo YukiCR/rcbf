@@ -33,13 +33,14 @@
 \newtheorem{definition}{Definition}
 \newtheorem{asmp}{Theorem}
 \newtheorem{assumption}[asmp]{Assumption}
+\newtheorem{remark}{Remark}
 
-\DeclareMathOperator*{\argmin}{arg\,min}
+\graphicspath{ {./figure/} } % where to find figures
 %===============================================================================
 \begin{document}
 \begin{frontmatter}
 
-\title{Integrating High-Level Decisions with Distributed Safey Filter for Multi-Satellite Collision Avoidance} 
+\title{Integrating High-Level Priority Decisions with Distributed Safey Filter for Multi-Satellite Collision Avoidance} 
 % Title, preferably not more than 10 words.
 
 \thanks[footnoteinfo]{Sponsor and financial support acknowledgment
@@ -195,7 +196,7 @@ forward invariant.
 \par We first introduce the ``safe protocol'' constraint formulation, then give the distributed safety filter design based on the ``safe protocol''. 
 
 \par For satellite $i$ and satellite $j$, the ``safe protocol'' set for satellite $i$ corresponding to satellite $j$ is a half-space described as
-\begin{equation}
+\begin{equation} \label{eqn:safeProtocol}
    \begin{aligned}
       \mathcal{S}_{ij} = \left\{ \boldsymbol{u}_i \mid -\hat{\boldsymbol{n}}_{ij}^\top \boldsymbol{u}_i \le \vphantom{\frac{1}{d_{ij}}} \right. 
       & \hat{\boldsymbol{n}}_{ij}^{\top} \left[(\alpha_1 + \alpha_2)\boldsymbol{v}_i + \boldsymbol{f}_{vi} \right] \\
@@ -210,7 +211,7 @@ $p_{ij} \in \mathbb{R}$ is the priority parameter, reresenting agent $i$'s prior
 
 \par The following result renders that two satellites are collision-free if both of the them follow the ``safety protocol''.
 
-\begin{thm}
+\begin{thm} \label{thm:safeProtocol}
    For systems discribed as (\ref{eqn:dynamics1}) and (\ref{eqn:dynamics2}), $\mathfrak{S}_{0ij}$ is forward invariant if $\boldsymbol{u}_i \in \mathcal{S}_{ij}, \boldsymbol{u}_j \in \mathcal{S}_{ji}$ and $p_{ij} + p_{ji} \le 1$.
 \end{thm}
 \begin{pf}
@@ -232,26 +233,39 @@ To get the constraint on control, we further define
 \begin{equation}
    \begin{aligned}
       \Psi_{2ij} =& \dot{\Psi}_{1ij} + \alpha_2 \Psi_{1ij} \\
-                 =& \frac{1}{d_{ij}^2}\left( (\boldsymbol{v}_1 - \boldsymbol{v}_2)^{\top}d_{ij} - (\hat{\boldsymbol{n}}_{ij}^\top \boldsymbol{v}_{ij})(\boldsymbol{p}_1 - \boldsymbol{p}_2)^{\top} \right) \boldsymbol{v}_{ij} \\
-                 &+ \hat{\boldsymbol{n}}_{ij}^\top (\boldsymbol{u}_1 + \boldsymbol{f}_{v1} - \boldsymbol{u}_2 - \boldsymbol{f}_{vj}) + \alpha_1 \hat{\boldsymbol{n}}_{ij}^\top \boldsymbol{v}_{ij} \\
+                 =& \frac{1}{d_{ij}^2}\left( (\boldsymbol{v}_i - \boldsymbol{v}_j)^{\top}d_{ij} - (\hat{\boldsymbol{n}}_{ij}^\top \boldsymbol{v}_{ij})(\boldsymbol{p}_i - \boldsymbol{p}_j)^{\top} \right) \boldsymbol{v}_{ij} \\
+                 &+ \hat{\boldsymbol{n}}_{ij}^\top (\boldsymbol{u}_i + \boldsymbol{f}_{vi} - \boldsymbol{u}_j - \boldsymbol{f}_{vj}) + \alpha_1 \hat{\boldsymbol{n}}_{ij}^\top \boldsymbol{v}_{ij} \\
                  &+ \alpha_2 (\hat{\boldsymbol{n}}_{ij}^\top \boldsymbol{v}_{ij} + \alpha_1 \Psi_{0ij}) \\
-                 =& \hat{\boldsymbol{n}}_{ij}^\top \left(\boldsymbol{u}_1 - \boldsymbol{u}_2 + (\alpha_1 + \alpha_2)\boldsymbol{v}_{ij} + \boldsymbol{f}_{v1} - \boldsymbol{f}_{v2} \right) \\
+                 =& \hat{\boldsymbol{n}}_{ij}^\top \left(\boldsymbol{u}_i - \boldsymbol{u}_j + (\alpha_1 + \alpha_2)\boldsymbol{v}_{ij} + \boldsymbol{f}_{vi} - \boldsymbol{f}_{vj} \right) \\
                  &+ \frac{1}{d_{ij}} \left( \|\boldsymbol{v}_{ij}\|^2 -  (\hat{\boldsymbol{n}}_{ij}^{\top}\boldsymbol{v}_{ij} )^2 \right) + \alpha_1 \alpha_2 (d_{ij} - R_{ij})
    \end{aligned}
 \end{equation}
 Given that $\boldsymbol{u}_i \in \mathcal{S}_{ij}$ and $\boldsymbol{u}_j \in \mathcal{S}_{ji}$, by adding up the inequalities in the definition of $\mathcal{S}_{ij}$ and $\mathcal{S}_{ji}$ and substituting $\hat{\boldsymbol{n}}_{ji} = -\hat{\boldsymbol{n}}_{ij}$ into the inequality, one can get
 \begin{equation}
    \begin{aligned}
-      \tilde{\Psi}_{2ij} =& \hat{\boldsymbol{n}}_{ij}^\top \left(\boldsymbol{u}_1 - \boldsymbol{u}_2 + (\alpha_1 + \alpha_2)\boldsymbol{v}_{ij} + \boldsymbol{f}_{v1} - \boldsymbol{f}_{v2} \right) \\
+      \tilde{\Psi}_{2ij} =& \hat{\boldsymbol{n}}_{ij}^\top \left(\boldsymbol{u}_i - \boldsymbol{u}_j + (\alpha_1 + \alpha_2)\boldsymbol{v}_{ij} + \boldsymbol{f}_{vi} - \boldsymbol{f}_{vj} \right) \\
       &+ (p_{ij} + p_{ji})\left[ \frac{1}{d_{ij}} \left( \|\boldsymbol{v}_{ij}\|^2 -  (\hat{\boldsymbol{n}}_{ij}^{\top}\boldsymbol{v}_{ij} )^2 \right) \right. \\
       &+ \left. \alpha_1 \alpha_2 (d_{ij} - R_{ij}) 
             \vphantom{ \frac{1}{d_{ij}} \left( \|\boldsymbol{v}_{ij}\|^2 -  (\hat{\boldsymbol{n}}_{ij}^{\top}\boldsymbol{v}_{ij} )^2 \right) } 
          \right] \ge 0
    \end{aligned}
 \end{equation}
-Notice that $\|\boldsymbol{v}_{ij}\|^2 -  (\hat{\boldsymbol{n}}_{ij}^{\top}\boldsymbol{v}_{ij} )^2  \ge 0$ and $d_{ij} - R_{ij} \ge 0$ stands for $(\boldsymbol{x}_i, \boldsymbol{x}_j) \in \mathfrak{S}_{0ij}$, $\Psi_{2ij} \ge \tilde{\Psi}_{2ij} \ge 0$ then stands for any $p_{ij}$ and $p_{ji}$ satisfying $p_{ij} + p_{ji} \le 1$.
-Consequently, according to Definition \ref{def:HOCBF} and Theorem \ref{thm:HOCBF}, $h_{ij}$ is a valid HOCBF and $\mathfrak{S}_{0ij}$ is then a forward invariant set for agent $i$ and agent $j$.
+Notice that $\|\boldsymbol{v}_{ij}\|^2 -  (\hat{\boldsymbol{n}}_{ij}^{\top}\boldsymbol{v}_{ij} )^2  \ge 0$ and $d_{ij} - R_{ij} \ge 0$ hold for $(\boldsymbol{x}_i(0), \boldsymbol{x}_j(0)) \in \mathfrak{S}_{0ij}$, $\Psi_{2ij} \ge \tilde{\Psi}_{2ij} \ge 0$ then stands for any $p_{ij}$ and $p_{ji}$ satisfying $p_{ij} + p_{ji} \le 1$.
+Consequently, according to Definition \ref{def:HOCBF} and Theorem \ref{thm:HOCBF}, $h_{ij}$ is a valid HOCBF and thus $\mathfrak{S}_{0ij}$ is a forward invariant set for agent $i$ and agent $j$.
 \end{pf}
+
+\begin{figure*}[t!]
+   \newcommand{\upperClip}{90bp}
+   \newcommand{\lowerClip}{90bp}
+   \newcommand{\leftClip}{10bp}
+   \newcommand{\rightClip}{10bp}
+   \centering
+   \subfloat[$p_{12} = 0.5, p_{21} = 0.5$]{\includegraphics[width=0.31\linewidth, trim = \leftClip{} \lowerClip{} \rightClip{} \upperClip{}]{priv1.pdf} \label{fig:priv1}} \hfil
+   \subfloat[$p_{12} = 0.7, p_{21} = 0.3$]{\includegraphics[width=0.31\linewidth, trim = \leftClip{} \lowerClip{} \rightClip{} \upperClip{}]{priv2.pdf} \label{fig:priv2} } \hfil
+   \subfloat[$p_{12} = 1.0, p_{21} = 0.0$]{\includegraphics[width=0.31\linewidth, trim = \leftClip{} \lowerClip{} \rightClip{} \upperClip{}]{priv3.pdf} \label{fig:priv3} }
+   \caption{Agents' behavior with different priority parameters.}
+   \label{fig:priorityIllustration}
+ \end{figure*}
 
 Based on the properties of ``safe protocol'' set, we further design the distributed safeguarding policy in a minimum invasive way as
 \begin{equation}
@@ -266,22 +280,71 @@ Based on the properties of ``safe protocol'' set, we further design the distribu
 where $\mathop{\mathrm{ESDF}}(\boldsymbol{u}, \mathcal{S}_{ij})$ is the signed Euclidean distance function (ESDF) of $\boldsymbol{u}$ to the boundary of half-space $\mathcal{S}_{ij}$, with $\mathop{\mathrm{ESDF}}(\boldsymbol{u}, \mathcal{S}_{ij})$ defined to be negative if $\boldsymbol{u} \in \mathcal{S}_{ij}$.
 
 \par If $\cap_{j\neq i} \mathcal{S}_{ij} \neq \varnothing$, $\boldsymbol{\pi}_i$ minimumly modifies $\boldsymbol{u}_{ri}$ to follow all ``safety protocols''.
-Since the feasible region $\cap_{j\neq i} \mathcal{S}_{ij}$ is a polytope now, $\boldsymbol{\pi}_i$ is in the form of a quadratic programming (QP) and can be solved in real time onboard; 
-If $\cap_{j\neq i} \mathcal{S}_{ij} = \varnothing$, it is then impossible to follow all ``safety protocols'' for all agent $j, j\neq i$. Therefore, $\boldsymbol{\pi}_i$ synthesises a control that minimizes the maximum violation of all ``safe protocols''.
+Since the feasible region $\cap_{j\neq i} \mathcal{S}_{ij}$ is now a polytope, $\boldsymbol{\pi}_i$ is in the form of a quadratic programming (QP) and can be solved in real time onboard; 
+If $\cap_{j\neq i} \mathcal{S}_{ij} = \varnothing$, it is then impossible to follow all ``safety protocols'' for all agent $j, j\neq i$. Therefore, $\boldsymbol{\pi}_i$ synthesises a control that minimizes the maximum violation of all ``safe protocols'' to get the ``safest possible'' control.
 Such an optimization can also be solved in real time onboard via a linear programming (LP).
 
 \begin{thm}
    If $\cap_{j\neq i} \mathcal{S}_{ij} \neq \varnothing$ for all agent $i$, $\mathfrak{S}_0$ is forward invariant if $\boldsymbol{u}_i = \boldsymbol{\pi}_i(\boldsymbol{u}_{ri}, \boldsymbol{X})$ and $p_{ij} + p_{ji} \le 1, \forall i,j = 1, \dots, N, i\neq j$.
 \end{thm}
 \begin{pf}
-   XXXX
+   This result directly follows Theorem \ref{thm:safeProtocol}. 
+   Given that $\cap_{j\neq i} \mathcal{S}_{ij} \neq \varnothing, \forall i = 1, 
+   \dots, N$, it cleary renders that $\boldsymbol{u}_i = \boldsymbol{\pi}_i(\boldsymbol{u}_{ri}, \boldsymbol{X}) \in \cap_{j\neq i} \mathcal{S}_{ij}$ is then satisfied for all agents.
+   Since for any satellite pair composed of satellite $i$ and satellite $j$, $\boldsymbol{u}_i \in \cap_{j\neq i} \mathcal{S}_{ij} \subseteq  \mathcal{S}_{ij}, \boldsymbol{u}_j \in \cap_{i\neq j} \mathcal{S}_{ji} \subseteq  \mathcal{S}_{ji}$ and $p_{ij} + p_{ji} \le 1$ are satisfied, according to Theorem \ref{thm:safeProtocol}, all $\mathfrak{S}_{0ij}, i \neq j$ are forward invariant.
+   Hence their intersection $\mathfrak{S}_0 = \bigcap_{i \neq j}\mathfrak{S}_{0ij}, ~i,j = 1, \dots, N$ is forward invariant and the whole satellite swarm is collision-free.
 \end{pf}
 
-REMARK: meaning and plot, difference between CBF-QP
+\begin{remark}
+   The priority parameter $p_{ij}$ is introduced with a clear physical meaning.
+   Since $\|\boldsymbol{v}_{ij}\|^2 -  (\hat{\boldsymbol{n}}_{ij}^{\top}\boldsymbol{v}_{ij} )^2  \ge 0$ holds universally and $d_{ij} - R_{ij} \ge 0$ holds as long as agent $i$ and agent $j$ do not collide with each other, the right hand side of (\ref{eqn:safeProtocol}) is positive correlated to $p_{ij}$.
+   Consequently, the higher $p_{ij}$, the easier it is for  agent $i$ to satisfy $\boldsymbol{u}_i \in \mathcal{S}_{ij}$.
+   Due to the constraint that $p_{ij} + p_{ji} \le 1$, agent $j$ will then bear lower $p_{ji}$ and in turn take more responsibility for avoiding collision with agent $i$.
+   By tuning the priority matrix $\boldsymbol{P} = \{p_{ij}\} \in \left\{ \boldsymbol{P} \in \mathbb{R}^{N\times N} \mid p_{ii} = 0,  p_{ij} + p_{ji} \le 1, i\neq j \right\}$, the high-level decision is introduced into the distributed safety filter, deciding ``who should evading more to avoid collision''.
+   Figure \ref{fig:priorityIllustration} illustrates the agents' behavior with different $p_{ij}$. Two identical satellites are simulated to switch their positions with different $p_{ij}$.
+   By increasing $p_{12}$ and decreasing $p_{21}$, satellite 1 (colored in blue) performed less evading behavior, while satellite 2 (colored in red) performed more evading behavior.
+\end{remark}
 
 \section{Cooperating with high-level decisions}
 
+\subsection{Cooperating with Large Language Models}
+\par While the collsiion avoidance requirement is clear and easy to be modelled mathematiccally, the mission level requirement is often much more complicated and often described in natural language. 
+By leveraging the understanding and reasoning ability of LLMs, the aforementioned priority parameters can be generated according to the mission-level requirements, thereby allocate the collision evasion responsibily of each satellite.
+
+\par However, directly generate a priority matrix $\boldsymbol{P}$ satisfying $p_{ij} + p_{ji} \le 1, \forall i \neq j$ through LLM is challenging since satisfaction of such a condition is not guaranteed due to the black-box nature of LLMs.
+As a result, instead of generating priority matrix directly, we use LLM to generate an priority array as $\mathbf{p} = [p_1,~p_2,~\dots,~p_N], p_i \ge 0, \forall i = 1, \dots, N$, with $p_i$ representing the significance of satellite $i$ in the mission.
+In addition, structured output technique is adopted to force the output format to LLMs.
+After getting the legal output, the priority parameters are calulated through $p_{ij} = p_i/(p_i + p_j)$ to meet the safety condition.
+
+\par background
+
 \section{Numerical Experiments}
+
+\begin{figure}[t!]
+   \newcommand{\upperClip}{40bp}
+   \newcommand{\lowerClip}{20bp}
+   \newcommand{\leftClip}{0bp}
+   \newcommand{\rightClip}{0bp}
+   \centering
+   \subfloat[$p_{12} = 0.5, p_{21} = 0.5$]{\includegraphics[width=0.9\linewidth, trim = \leftClip{} \lowerClip{} \rightClip{} \upperClip{}, clip]{llm1.pdf} \label{fig:11}} \\
+   \subfloat[$p_{12} = 0.7, p_{21} = 0.3$]{\includegraphics[width=0.9\linewidth, trim = \leftClip{} \lowerClip{} \rightClip{} \upperClip{}, clip]{llm2.pdf} \label{fig:22} } \\
+   \subfloat[$p_{12} = 1.0, p_{21} = 0.0$]{\includegraphics[width=0.9\linewidth, trim = \leftClip{} \lowerClip{} \rightClip{} \upperClip{}, clip]{llm3.pdf} \label{fig:33} } 
+   \label{fig:111}
+ \end{figure}
+
+\begin{figure*}[t!]
+   \newcommand{\upperClip}{10bp}
+   \newcommand{\lowerClip}{0bp}
+   \newcommand{\leftClip}{0bp}
+   \newcommand{\rightClip}{0bp}
+   \centering
+   \subfloat[$p_{12} = 0.5, p_{21} = 0.5$]{\includegraphics[width=0.45\linewidth, trim = \leftClip{} \lowerClip{} \rightClip{} \upperClip{}, clip]{opt1.pdf} \label{fig:}} \hfil
+   \subfloat[$p_{12} = 0.7, p_{21} = 0.3$]{\includegraphics[width=0.45\linewidth, trim = \leftClip{} \lowerClip{} \rightClip{} \upperClip{}, clip]{opt2.pdf} \label{fig:} } \\
+   \subfloat[$p_{12} = 1.0, p_{21} = 0.0$]{\includegraphics[width=0.45\linewidth, trim = \leftClip{} \lowerClip{} \rightClip{} \upperClip{}, clip]{opt3.pdf} \label{fig:} } \hfil
+   \subfloat[$p_{12} = 0.5, p_{21} = 0.5$]{\includegraphics[width=0.45\linewidth, trim = \leftClip{} \lowerClip{} \rightClip{} \upperClip{}, clip]{opt4.pdf} \label{fig:}} 
+   \caption{Agents' behavior with different priority parameters.}
+   \label{fig:}
+ \end{figure*}
 
 \section{Conclusion}
 
