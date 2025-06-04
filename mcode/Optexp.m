@@ -40,7 +40,7 @@ privilegeMat = (ones(n_agent) - eye(n_agent)) * 0.5;
 
 % 1 for distributed with fixed P, 2 for centralized, 3 for distributed with optimized P,
 % 4 for distributed assuming other agents are not controlled
-form = 3;
+form = 4;
 
 modif = 0;
 switch form
