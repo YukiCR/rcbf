@@ -47,9 +47,9 @@
 goes here. Paper titles should be written in uppercase and lowercase
 letters, not all uppercase.}
 
-\author[First]{First A. Author} 
-\author[Second]{Second B. Author, Jr.} 
-\author[Third]{Third C. Author}
+\author[First]{Chengrui Shi} 
+\author[Second]{Tao Meng} 
+\author[Third]{Renhao Mao}
 
 \address[First]{National Institute of Standards and Technology, 
    Boulder, CO 80305 USA (e-mail: author@ boulder.nist.gov).}
@@ -349,7 +349,7 @@ As a result, instead of generating priority matrix directly, we use LLM to gener
 To ensure the output stability, structured output technique (\cite{XXX}) is adopted to force the output format on LLMs.
 After getting the legal output, the priority parameters are calulated through $p_{ij} = p_i/(p_i + p_j)$ to meet the safety condition.
 
-\par Prompt is also carefully designed to enhance the performance of LLMs. A simple chain of thought is given to LLMs to first classify satellites to different levels based on their roles and missions, then assign priority array based on satellites' levels, and finally modify the priority of satellites in the same level.
+\par Prompts are also carefully designed to enhance the performance of LLMs. A simple chain of thought is given to LLMs to first classify satellites to different levels based on their roles and missions, then assign priority array based on satellites' levels, and finally modify the priority of satellites in the same level.
 Demonstrations are also given to take advantage of the in-context learning ability of LLMs \cite[]{Min2022fewshot}.
 
 \section{Numerical Experiments}
@@ -382,10 +382,28 @@ All methods above use the reference control $\boldsymbol{U}_r$ given by the same
 \par We compare four methods above by performing the same task to move all satellites to the initial position of its opposite satellite. The trajectory of satellites is shown in {\figurename} \ref{fig:optexp} by plotting the position of each agent every $1.5\mathrm{s}$. The starting directions of each satellite is illustrated by arrows, with the starting points of the arrows aligned with the initial positions of agents, and the directions of the arrows aligned with the velocity directions of each agent at $t = 0.5\mathrm{s}$.
 The minimum distance $h_{ij}$ is drawn in {\figurename} \ref{fig:minDistance}.
 
-\par As shown in {\figurename} \ref{fig:opt1}, satellites encounter a deadlock in the first case, which is related to distributed and local design of the controller.
-Since the XXXX
+\par As shown in {\figurename} \ref{fig:opt1}, satellites encountered a deadlock in the first case, which is related to distributed and local design of the controller.
+Since the centralized control case optimizes control globally, satellites were coordinated to their goals ({\figurename} \ref{fig:opt2}).
+By using the centralized control as a low frequency global reference, the proposed method avoided the deadlock as well with distributed control ({\figurename} \ref{fig:opt3}).
+The non-cooperative case coordinated the satellites to their goals ({\figurename} \ref{fig:opt4}). 
+However, as shown in {\figurename} \ref{fig:minDistance}, such a method is invalid since collision happened between $150$ and $200\mathrm{s}$.
+This happened since the assumption that $\boldsymbol{u}_j = \boldsymbol{0}, j \neq i$ did not hold in the experiment.
+By comparing the methods above, we validated that the proposed distributed safety filter can benefit from global reference control via priority optimization.
 
-\begin{figure}[!b]
+\subsection{Cooperating with Large Language Models}
+\par We also validated the effectiveness of cooperating LLMs with the proposed safety filter. A Gemma3:12b \cite[]{XXX} model is deployed locally to perform the priority assignment task. We experimented the same task to switch the positions of 6 satellites with three different prompts. 
+In the first case, LLM was informed that ``Satellite 1 is mission critical. All other satellites are backup satellites''; 
+in the second case, LLM was given the prompt that ``Satellite 1 is mission critical. All other satellites have low fuel'';
+in the last case, LLM was hinted that ``All satellites are the same''.
+The trajectories of satellite are shown in {\figurename} \ref{fig:llmexp}, with $T_1$ representing the time taken for satellite 1 to arrive its goal.
+
+\par Given the prompt above, LLM outputted the priority array as $\mathbf{p} = [10, 1, 1, 1, 1, 1]$, $\mathbf{p} = [9, 7, 7, 7, 7, 7]$ and $\mathbf{p} = [5, 5, 5, 5, 5, 5]$, respectively. 
+Consequently, the priority parameter $p_{1j}, j\neq 1$ becomes lower and lower.
+The difference of $p_{1j}$ is then reflected on the trajectory and arriving time  of satellite 1. 
+From {\figurename} \ref{fig:llm1} to {\figurename} \ref{fig:llm1}, satellite 1 experienced more and more control modification from the safety filter, which increased the curvature of the satellite 1's trajectory and therefore increased $T_1$ from $204.5\mathrm{s}$ to $321.5\mathrm{s}$.
+This experiment demonstrated that the proposed method can accommodate to mission-level requirements by cooperating with priority decisions of LLMs.
+
+\begin{figure}[!t]
    \begin{center}
       \newcommand{\upperClip}{30bp}
       \newcommand{\lowerClip}{8bp}
@@ -406,8 +424,8 @@ Since the XXXX
    \subfloat[$T_1 = 204.5\mathrm{s}$]{\includegraphics[width=0.9\linewidth, trim = \leftClip{} \lowerClip{} \rightClip{} \upperClip{}, clip]{llm1.png} \label{fig:11}} \\
    \subfloat[$T_1 = 295.5\mathrm{s}$]{\includegraphics[width=0.9\linewidth, trim = \leftClip{} \lowerClip{} \rightClip{} \upperClip{}, clip]{llm2.png} \label{fig:22} } \\
    \subfloat[$T_1 = 321.5\mathrm{s}$]{\includegraphics[width=0.9\linewidth, trim = \leftClip{} \lowerClip{} \rightClip{} \upperClip{}, clip]{llm3.png} \label{fig:33} } 
-   \caption{Swarm behavior with different LLM prompt.}
-   \label{fig:222}
+   \caption{Swarm behavior with different LLM prompts.}
+   \label{fig:llmexp}
 \end{figure}
 
 \section{Conclusion}
@@ -417,9 +435,9 @@ the main points of the paper, do not replicate the abstract as the
 conclusion. A conclusion might elaborate on the importance of the work
 or suggest applications and extensions.
 
-\begin{ack}
-Place acknowledgments here.
-\end{ack}
+% \begin{ack}
+% Place acknowledgments here.
+% \end{ack}
 
 \bibliography{ref}             % bib file to produce the bibliography
                                                      % with bibtex (preferred)
