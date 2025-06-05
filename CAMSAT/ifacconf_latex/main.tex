@@ -84,20 +84,9 @@ Multi-satellite, Collision Avoidance, Control Barrier Function
 %===============================================================================
 
 \section{Introduction}
-This document is a template for \LaTeXe. If you are reading a paper or
-PDF version of this document, please download the electronic file
-\texttt{ifacconf.tex}. You will also need the class file
-\texttt{ifacconf.cls}. Both files are available on the IFAC web site.
+\par requirements
 
-Please stick to the format defined by the \texttt{ifacconf} class, and
-do not change the margins or the general layout of the paper. It
-is especially important that you do not put any running header/footer
-or page number in the submitted paper.\footnote{
-This is the default for the provided class file.}
-Use \emph{italics} for emphasis; do not underline.
-
-Page limits may vary from conference to conference. Please observe the 
-page limits of the event for which your paper is intended. \cite{Abl:56}
+\par related works: APF VO Learning? CBF
 
 \section{Preliminaries}
 \par We review High Order Control Barrier Function here, which is the fundamental technique in this paper.
@@ -400,7 +389,7 @@ The trajectories of satellite are shown in {\figurename} \ref{fig:llmexp}, with 
 \par Given the prompt above, LLM outputted the priority array as $\mathbf{p} = [10, 1, 1, 1, 1, 1]$, $\mathbf{p} = [9, 7, 7, 7, 7, 7]$ and $\mathbf{p} = [5, 5, 5, 5, 5, 5]$, respectively. 
 Consequently, the priority parameter $p_{1j}, j\neq 1$ becomes lower and lower.
 The difference of $p_{1j}$ is then reflected on the trajectory and arriving time  of satellite 1. 
-From {\figurename} \ref{fig:llm1} to {\figurename} \ref{fig:llm1}, satellite 1 experienced more and more control modification from the safety filter, which increased the curvature of the satellite 1's trajectory and therefore increased $T_1$ from $204.5\mathrm{s}$ to $321.5\mathrm{s}$.
+From {\figurename} \ref{fig:llm1} to {\figurename} \ref{fig:llm3}, satellite 1 experienced more and more control modification from the safety filter, which increased the curvature of the satellite 1's trajectory and therefore increased $T_1$ from $204.5\mathrm{s}$ to $321.5\mathrm{s}$.
 This experiment demonstrated that the proposed method can accommodate to mission-level requirements by cooperating with priority decisions of LLMs.
 
 \begin{figure}[!t]
@@ -421,9 +410,9 @@ This experiment demonstrated that the proposed method can accommodate to mission
    \newcommand{\leftClip}{0bp}
    \newcommand{\rightClip}{0bp}
    \centering
-   \subfloat[$T_1 = 204.5\mathrm{s}$]{\includegraphics[width=0.9\linewidth, trim = \leftClip{} \lowerClip{} \rightClip{} \upperClip{}, clip]{llm1.png} \label{fig:11}} \\
-   \subfloat[$T_1 = 295.5\mathrm{s}$]{\includegraphics[width=0.9\linewidth, trim = \leftClip{} \lowerClip{} \rightClip{} \upperClip{}, clip]{llm2.png} \label{fig:22} } \\
-   \subfloat[$T_1 = 321.5\mathrm{s}$]{\includegraphics[width=0.9\linewidth, trim = \leftClip{} \lowerClip{} \rightClip{} \upperClip{}, clip]{llm3.png} \label{fig:33} } 
+   \subfloat[$T_1 = 204.5\mathrm{s}$]{\includegraphics[width=0.9\linewidth, trim = \leftClip{} \lowerClip{} \rightClip{} \upperClip{}, clip]{llm1.png} \label{fig:llm1}} \\
+   \subfloat[$T_1 = 295.5\mathrm{s}$]{\includegraphics[width=0.9\linewidth, trim = \leftClip{} \lowerClip{} \rightClip{} \upperClip{}, clip]{llm2.png} \label{fig:llm2} } \\
+   \subfloat[$T_1 = 321.5\mathrm{s}$]{\includegraphics[width=0.9\linewidth, trim = \leftClip{} \lowerClip{} \rightClip{} \upperClip{}, clip]{llm3.png} \label{fig:llm3} } 
    \caption{Swarm behavior with different LLM prompts.}
    \label{fig:llmexp}
 \end{figure}
