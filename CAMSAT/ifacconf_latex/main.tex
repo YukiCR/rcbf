@@ -40,7 +40,7 @@
 \begin{document}
 \begin{frontmatter}
 
-\title{Integrating High-Level Priority Decisions with Distributed Safey Filter for Multi-Satellite Collision Avoidance} 
+\title{Integrating High-Level Priority Decisions with Distributed Safety Filter for Multi-Satellite Collision Avoidance} 
 % Title, preferably not more than 10 words.
 
 \thanks[footnoteinfo]{Sponsor and financial support acknowledgment
@@ -84,11 +84,38 @@ Multi-satellite, Collision Avoidance, Control Barrier Function
 %===============================================================================
 
 \section{Introduction}
-\par requirements
+\par Multi-satellite systems have exposed great potential in vairous missions \cite[]{Bandyopadhyay2015SmallSatReview}.
+With the increasing number of spacecraft on orbit, the possibility of inter-satellite collision is also increasing dramatically. 
+This demands real-time, safe-guaranteed strategies for inter-satellite collision avoidance.
+In addition, agents in multi-satellite systems often play different roles (for example, leaders and followers in formation control) and therefore should take distinct responsibilities according to their mission.
+This further requires the compatability of collision avoidance strategies with high-level decisions.
 
-\par related works: APF VO Learning? CBF
+\par Extensive research has been conducted to perform safe multi-satellite missions from the control aspect, in which artificial potential field (APF) methods, velocity obstacle (VO) methods and control barrier function (CBF) methods are three representitive examples.
+%APF
+APF-based methods coordinate agents based on attraction and repulsion field design. 
+For instance, \cite{Hwang2022APF} proposed a circulating potential field to avoid local minimum plobrems, and \cite{Guan2024APF} introduced another APF-based method to maintain the formation of satellites. 
+%VO
+VO-based methods consider collision avoidance in the velocity space \cite[]{Douthwaite2019VO}. 
+Developed from VO, reciprocal velocity obstacle (RVO) and optimal reciprocal collision avoidance (ORCA) extend the collision evading strategy by spliting the collision avoidance responsibility \cite[]{vanDenBerg2008RVO,Berg2011ORCA}.
+A VO-based method is also proposed for collision avoidance of spacecraft systems by \cite[]{Li2025ELVO}.
+%CBF
+CBF is proposed based on the forward invariant condition of control affine systems \cite[]{XXX}. 
+By minimumly modifying a nominal control while respecting the CBF constraints, provable safety is provided to systems in the form of safety filter.
+Based on the safety filter technique, methods are proposed for multi-agent systems \cite[]{Borrmann2015CBFswarm} and extended to multi-satellite systems \cite[]{Hibbard2022CBFspacecraft}. Other CBF-based methods are also proposed for multi-agent systems to consider disturbance \cite[]{Cheng2020CBFDisturbance} and integrate with learning-based control \cite[]{Liu2024RLFlocking}.
 
-\section{Preliminaries}
+\par Even though the aforementioned works provides \textit{agent-level safety} for multi-satellite systems, few of them are compatable with \textit{high-level decisions}:
+these methods typically consider multi-satellite systems composed of \textit{identical} satellites and struggles to adjust the swarm behavior according to swarm-level decisions.
+As a result, the behavior of the satellite swarm remains unchanged even if the mission variates a lot.
+To tackle this problem, we propose a distributed collision avoidance framework for multi-satellite systems with high-level tuned priority.
+Inspired by \cite{Berg2011ORCA} to split the evading responsibility and by \cite{Chen2021Backup} to decouple the CBF constraints, we introduce ``safety protocol'' for satellite swarms to guarantee safety. 
+By cooperating with optimization or large language models (LLMs) to tune priority parameters in the ``safety protocol'', we further provide a means to modify the swarm behavior.
+
+\par The remainder of this paper is organized as follows: Section \ref{sec:preliminariy} provides a background of high order control barrier functions, and Section \ref{sec:problemFormulation} formulate the problem of this paper formally.
+Section \ref{sec:filterDesign} introduces the distributed safety filter design and Section \ref{sec:decision} further discusses how to incorporate the safety filter with high-level decisions.
+Section \ref{sec:exp} validate the proposed framework with numerical experiments.
+
+
+\section{Preliminaries}\label{sec:preliminariy}
 \par We review High Order Control Barrier Function here, which is the fundamental technique in this paper.
 
 Consider a general continuous time control-affine system
@@ -124,7 +151,7 @@ where $x \in \mathcal{X} \subset \mathbb{R}^n$ is the state and $u \in \mathcal{
    \par Following the definitions in Definition \ref{def:HOCBF}, once $h$ is a HOCBF for system (\ref{eqn:system}), $\mathfrak{S}$ would be a \textit{forward invariant set} for the system, i.e., $\boldsymbol{x}(0) \in \mathfrak{S}, \boldsymbol{x}(t) \in \mathfrak{S}, \forall t > 0$.
 \end{thm}
 
-\section{Problem Formulation}
+\section{Problem Formulation}\label{sec:problemFormulation}
 \subsection{System Modelling}
 \par We consider $N$ satellite agents whose dynamics governed by Clohessy-Wiltshire equantions \cite[]{CWequations}.
 The dynamics of agent $i$ in the reference orbit frame is described as
@@ -181,7 +208,7 @@ forward invariant.
       \end{itemize}
 \end{enumerate}
 
-\section{Distributed Safety Filter Design}
+\section{Distributed Safety Filter Design}\label{sec:filterDesign}
 \par We first introduce the ``safe protocol'' constraint formulation, then give the distributed safety filter design based on the ``safe protocol''. 
 
 \par For satellite $i$ and satellite $j$, the ``safe protocol'' set for satellite $i$ corresponding to satellite $j$ is a half-space described as
@@ -295,7 +322,7 @@ Such an optimization can also be solved in real time onboard via a linear progra
    By increasing $p_{12}$ and decreasing $p_{21}$, satellite 1 (colored in blue) performed less evading behavior, while satellite 2 (colored in red) performed more evading behavior.
 \end{remark}
 
-\section{Cooperating with high-level decisions}
+\section{Cooperating with high-level decisions}\label{sec:decision}
 \subsection{Cooperating with Optimization}
 \par Due to the communication lagging and computing burden, centralized control struggles to meet the high control frequency requirement of collision avoidance.
 Nevertheless, it can be used as global reference for the aforementioned distributed safety filter via priority matrix optimization. 
@@ -341,8 +368,7 @@ After getting the legal output, the priority parameters are calulated through $p
 \par Prompts are also carefully designed to enhance the performance of LLMs. A simple chain of thought is given to LLMs to first classify satellites to different levels based on their roles and missions, then assign priority array based on satellites' levels, and finally modify the priority of satellites in the same level.
 Demonstrations are also given to take advantage of the in-context learning ability of LLMs \cite[]{Min2022fewshot}.
 
-\section{Numerical Experiments}
-
+\section{Numerical Experiments}\label{sec:exp}
 \par We validate the efficacy of the distributed safety filter by cooperating with optimization and LLM, respectively. 
 In the experiments, the safety distance of each agent is set to $r_i = 5\mathrm{m}, i = 1, \dots, N$ and $\omega$ is set to $0.00113 \mathrm{rad/s}$, which is approximatly the angular velocity of International Space Station.
 
@@ -373,7 +399,7 @@ The minimum distance $h_{ij}$ is drawn in {\figurename} \ref{fig:minDistance}.
 
 \par As shown in {\figurename} \ref{fig:opt1}, satellites encountered a deadlock in the first case, which is related to distributed and local design of the controller.
 Since the centralized control case optimizes control globally, satellites were coordinated to their goals ({\figurename} \ref{fig:opt2}).
-By using the centralized control as a low frequency global reference, the proposed method avoided the deadlock as well with distributed control ({\figurename} \ref{fig:opt3}).
+By using the centralized control above as a low frequency global reference, the proposed method avoided the deadlock as well with distributed control ({\figurename} \ref{fig:opt3}).
 The non-cooperative case coordinated the satellites to their goals ({\figurename} \ref{fig:opt4}). 
 However, as shown in {\figurename} \ref{fig:minDistance}, such a method is invalid since collision happened between $150$ and $200\mathrm{s}$.
 This happened since the assumption that $\boldsymbol{u}_j = \boldsymbol{0}, j \neq i$ did not hold in the experiment.
