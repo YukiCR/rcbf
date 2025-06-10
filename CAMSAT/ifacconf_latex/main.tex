@@ -47,11 +47,11 @@
 
 \author[First]{Chengrui Shi} 
 \author[Second]{Tao Meng} 
-% \author[First]{Renhao Mao}
+\author[First]{Renhao Mao}
 \author[First]{Hang Zhou}
 
 \address[First]{School of Aeronautics and Astronautics,  
-Zhejiang University, Hangzhou, 310027, China (e-mail: chengruishi,hangzhou@zju.edu.cn).}
+Zhejiang University, Hangzhou, 310027, China (e-mail: chengruishi,maorh,12324046@zju.edu.cn).}
 \address[Second]{Huanjiang Laboratory, 
    Zhuji, 311899, China (e-mail: mengtao@zju.edu.cn)}
 % \address[Third]{Electrical Engineering Department, 
@@ -72,7 +72,7 @@ Zhejiang University, Hangzhou, 310027, China (e-mail: chengruishi,hangzhou@zju.e
    First, we formulate ``safe protocol'' constraints among satellites and enforce these constraints on nominal controllers through distributed safety filters, establishing collision-free coordination of the swarm.
    By introducing tunable priority parameters within the safety filter, collision evasion responsibilities become dynamically adjustable, enabling swarm behavior adaptation. 
    We further demonstrate two methods to integrate with high-level decisions: using optimization to approximate global reference behaviors and using Large Language Models to accommodate to tasks, respectively.
-   Theoretical analysis proves the safety guarantees, while numerical experiments validate the framework's efficacy.
+   Theoretical analysis proves the safety guarantees, while numerical simulations demonstrate the framework's efficacy.
 \end{abstract}
 
 \begin{keyword}
@@ -104,16 +104,15 @@ By minimally modifying a nominal control to subject to CBF constraints, provable
 Leveraging this safety filter technique, methods have been developed for multi-agent systems \cite[]{Borrmann2015CBFswarm} and extended to multi-satellite systems \cite[]{Hibbard2022CBFspacecraft}. 
 Additional CBF-based approaches address challenges like disturbance  \cite[]{Cheng2020CBFDisturbance} and integrate with learning-based control \cite[]{Liu2024RLFlocking}.
 
-\par Even though the aforementioned works provide \textit{agent-level safety} for multi-satellite systems, few of them are compatable with \textit{high-level decisions}:
-these methods typically assume homogeneous satellites and struggle to adapt swarm behavior to task-specific requirements.
-Consequently, swarm behavior remains inflexible despite significant mission variations. 
-To address this problem, we propose a distributed collision avoidance framework for multi-satellite systems incorporating high-level assigned priorities.
+\par Even though the aforementioned works provide \textit{agent-level safety} for multi-satellite systems, few of them considered compatibility with \textit{high-level decisions}:
+these methods typically assume homogeneous satellites and execute collision avoidance independently of mission priorities. Consequently, mission-critical satellites may sacrifice operational efficiency when evading less critical counterparts.
+To resolve this limitation, we propose a distributed collision avoidance framework for multi-satellite systems incorporating high-level assigned priorities.
 Inspired by \cite{Berg2011ORCA} for shared collision evasion responsibility and by \cite{Chen2021Backup} for constraint decoupling, we introduce a ``safety protocol'' for satelite swarm safety. 
 By integrating optimization or large language models (LLMs) to adjust priority parameters within this ``protocol'', we further enable dynamic adaptation of swarm behavior.
 
 \par The remainder of this paper is organized as follows: Section \ref{sec:preliminariy} provides background on high order control barrier functions, and Section \ref{sec:problemFormulation} foramlly formulates the problem of this paper.
 Section \ref{sec:filterDesign} introduces the distributed safety filter design, and Section \ref{sec:decision} details the integration of safety filters with high-level decisions.
-Section \ref{sec:exp} validates the proposed framework through numerical experiments.
+Section \ref{sec:exp} validates the proposed framework through numerical simulations.
 
 
 \section{High Order Control Barrier Functions}\label{sec:preliminariy}
@@ -366,12 +365,12 @@ Demonstrations are also provided to leverage the LLM's in-context learning capab
    \label{fig:optexp}
 \end{figure*}
 
-\section{Numerical Experiments}\label{sec:exp}
+\section{Numerical Simulations}\label{sec:exp}
 % \par We validate the efficacy of the distributed safety filter by cooperating with optimization and LLM, respectively. 
 % In the experiments, the safety distance of each agent is set to $r_i = 5\mathrm{m}, i = 1, \dots, N$ and $\omega$ is set to $0.00113 \mathrm{rad/s}$, which is approximatly the angular velocity of International Space Station.
 
 \subsection{Cooperating with Optimization}
-\par We validate the proposed method by comparing four approaches: fixed priority, centralized control, optimized priority (proposed), and non-cooperative.
+\par We demonstrate the proposed method by comparing four approaches: fixed priority, centralized control, optimized priority (proposed), and non-cooperative.
 For the first case, the control of each agent is calculated distributedly by (\ref{eqn:strategy}) with $p_{ij} = 0.5, \forall i \neq j$.
 For the centralized control case, the control is calculated centrally through 
 \begin{equation}\label{eqn:centralizedStrategy}
@@ -398,13 +397,13 @@ The minimum distance $h_{ij}$ appear in {\figurename} \ref{fig:minDistance}.
 \par As shown in {\figurename} \ref{fig:opt1}, satellites encountered a deadlock in the first case, which is related to distributed and local design of the controller.
 Since the centralized control case optimizes control globally, satellites were coordinated to their goals ({\figurename} \ref{fig:opt2}).
 By using the centralized control above as a low frequency global reference, the proposed method avoided the deadlock as well with distributed control ({\figurename} \ref{fig:opt3}).
-The non-cooperative case coordinated the satellites to their goals aw well ({\figurename} \ref{fig:opt4}). 
-However, as shown in {\figurename} \ref{fig:minDistance}, such a method appears to be invalid since collision happened between $150~\mathrm{s}$ and $200~\mathrm{s}$.
+The non-cooperative case coordinated the satellites to their goals as well ({\figurename} \ref{fig:opt4}). 
+However, as shown in {\figurename} \ref{fig:minDistance}, such a method appears to be invalid since collision occured between $150~\mathrm{s}$ and $200~\mathrm{s}$.
 This happened due to invalid $\boldsymbol{u}_j = \boldsymbol{0}, j \neq i$ assumptions.
 These results above demonstrate that our distributed safety filter can effectively leverage global reference behaviors through priority optimization.
 
 \subsection{Cooperating with Large Language Models}
-\par We further validated the effectiveness of LLM integration with our safety filter. A local \texttt{Gemma3:12b} \cite[]{gemma2024} model is deployed to generate priority assignments for a 6-satellite position-swapping task under three distinct prompts. 
+\par We further demonstrate the effectiveness of LLM integration with our safety filter. A local \texttt{Gemma3:12b} \cite[]{gemma2024} model is deployed to generate priority assignments for a 6-satellite position-swapping task under three distinct prompts. 
 In the first case, LLM was informed that ``Satellite 1 is mission critical. All other satellites are backup satellites''; 
 in the second, LLM was given the prompt that ``Satellite 1 is mission critical. All other satellites have low fuel'';
 in the last case, LLM was hinted that ``All satellites are the same''.
