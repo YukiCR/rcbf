@@ -150,7 +150,7 @@ where $\boldsymbol{x} \in \mathcal{X} \subset \mathbb{R}^n$ is the state and $\b
 
 \section{Problem Formulation}\label{sec:problemFormulation}
 \subsection{System Modelling}
-\par We consider $N$ satellite agents with dynamics governed by Clohessy-Wiltshire equantions \cite[]{CWequations}.
+\par We consider $N$ satellite agents with dynamics governed by Clohessy-Wiltshire equations \cite[]{CWequations}.
 The dynamics of agent $i$ in the reference orbit frame is given by
 \begin{equation} \label{eqn:dynamics1}
    \dot{\boldsymbol{x}}_i = 
@@ -341,15 +341,17 @@ This optimization extracts the assignment preferences of centralized control int
 
 \subsection{Cooperating with Large Language Models}
 \par While collision avoidance requirements are mathematically straightforward, mission-level objectives are significantly more complex and often specified in natural language. 
-By leveraging the reasoning ability of LLMs, the aforementioned priority parameters can be generated according to the mission requirements, thereby allocating collision evasion responsibilities.
+By leveraging the reasoning ability of LLMs, the aforementioned priority parameters can be generated given the natural language discribed mission requirements, thereby allocating collision evasion responsibilities. 
+% More specificially, given the mission described in natural language, LLMs are capable of generating the priority parameters above to modify the satellite swarm behavior.
 
 \par However, directly generate a priority matrix $\boldsymbol{P}$ satisfying $p_{ij} + p_{ji} \le 1, \forall i \neq j$ through LLM is challenging due to the black-box nature of LLMs.
-As a result, instead of direct matrix generation, we use LLM to produce a priority array $\mathbf{p} = [p_1,~p_2,~\dots,~p_N], p_i \ge 0, \forall i = 1, \dots, N$, with $p_i$ representing the significance of satellite $i$ in the mission.
-To ensure the output stability, structured output technique is adopted to force the output format on LLMs.
+As a result, instead of direct matrix generation, we use LLMs to produce a priority array $\mathbf{p} = [p_1,~p_2,~\dots,~p_N], p_i \ge 0, \forall i = 1, \dots, N$, with $p_i$ representing the significance of satellite $i$ in the mission.
+To fix the output format, structured output technique is adopted to force the output format on LLMs.
 After getting the valid output, the priority parameters are calulated through $p_{ij} = p_i/(p_i + p_j)$ to inherently satisfy the safety condition.
 
-\par Prompts are also carefully engineered to enhance LLM performance. A chain of thought is given to LLMs to first  classify satellites by role and mission priority levels, then assign base priorities according to levels, and finally adjust priorities for satellites within the same level.
-Demonstrations are also provided to leverage the LLM's in-context learning capabilities \cite[]{Min2022fewshot}.
+\par Prompts are also carefully engineered to enhance LLM performance. 
+A chain of thought is given to LLMs to first classify satellites by role and mission priority levels, then assign base priorities according to levels, and finally adjust priorities for satellites within the same level.
+Demonstrations are also provided in the prompts to leverage the LLM's in-context learning capabilities \cite[]{Min2022fewshot}.
 
 \begin{figure*}[t!]
    \newcommand{\upperClip}{0bp}
@@ -370,7 +372,8 @@ Demonstrations are also provided to leverage the LLM's in-context learning capab
 % In the experiments, the safety distance of each agent is set to $r_i = 5\mathrm{m}, i = 1, \dots, N$ and $\omega$ is set to $0.00113 \mathrm{rad/s}$, which is approximatly the angular velocity of International Space Station.
 
 \subsection{Cooperating with Optimization}
-\par We demonstrate the proposed method by comparing four approaches: fixed priority, centralized control, optimized priority (proposed), and non-cooperative.
+\par We demonstrate the proposed method by comparing four approaches: fixed priority, centralized control, optimized priority (proposed), and non-cooperative 
+\footnote{Our code is available at \url{https://github.com/YukiCR/rcbf}}.
 For the first case, the control of each agent is calculated distributedly by (\ref{eqn:strategy}) with $p_{ij} = 0.5, \forall i \neq j$.
 For the centralized control case, the control is calculated centrally through 
 \begin{equation}\label{eqn:centralizedStrategy}
@@ -391,7 +394,9 @@ For the last case, control is calculated distributedly by each agent $i$ through
 with the assumption that $\boldsymbol{u}_j = \boldsymbol{0}, j \neq i$.  
 All approaches above use $\boldsymbol{U}_r$ given by the same proportional derivative (PD) controller.
 
-\par We evaluated all methods above on a position-swapping task where satellites move to their diametrically opposite positions. The trajectory of satellites is shown in {\figurename} \ref{fig:optexp} by plotting the position of each agent every $1.5~\mathrm{s}$. The starting directions of each satellite is illustrated by arrows, with the starting points of the arrows aligned with the initial positions of agents, and the directions of the arrows aligned with the velocity directions of each agent at $t = 0.5~\mathrm{s}$.
+\par We evaluated all methods above on a position-swapping task.
+% where satellites move to their diametrically opposite positions. 
+The trajectory of satellites is shown in {\figurename} \ref{fig:optexp} by plotting the position of each agent every $1.5~\mathrm{s}$. The starting directions of each satellite is illustrated by arrows, with the starting points of the arrows aligned with the initial positions of agents, and the directions of the arrows aligned with the velocity directions of each agent at $t = 0.5~\mathrm{s}$.
 The minimum distance $h_{ij}$ appear in {\figurename} \ref{fig:minDistance}.
 
 \par As shown in {\figurename} \ref{fig:opt1}, satellites encountered a deadlock in the first case, which is related to distributed and local design of the controller.
@@ -405,8 +410,9 @@ These results above demonstrate that our distributed safety filter can effective
 \subsection{Cooperating with Large Language Models}
 \par We further demonstrate the effectiveness of LLM integration with our safety filter. A local \texttt{Gemma3:12b} \cite[]{gemma2024} model is deployed to generate priority assignments for a 6-satellite position-swapping task under three distinct prompts. 
 In the first case, LLM was informed that ``Satellite 1 is mission critical. All other satellites are backup satellites''; 
-in the second, LLM was given the prompt that ``Satellite 1 is mission critical. All other satellites have low fuel'';
+in the second, LLM was told that ``Satellite 1 is mission critical. All other satellites have low fuel'';
 in the last case, LLM was hinted that ``All satellites are the same''.
+Notably, no domain- or task-specific fine-tuning is conducted for such a model.
 The trajectories of satellite are shown in {\figurename} \ref{fig:llmexp}, with $T_1$ representing the time required by satellite 1 to arrive its goal.
 
 \par Given the prompts above, LLM outputted the priority array as $\mathbf{p} = [10, 1, 1, 1, 1, 1]$, $\mathbf{p} = [9, 7, 7, 7, 7, 7]$ and $\mathbf{p} = [5, 5, 5, 5, 5, 5]$, respectively. 
