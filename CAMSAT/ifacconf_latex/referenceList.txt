@@ -1,0 +1,81 @@
+ Ames, A.D., Coogan, S., Egerstedt, M., Notomista, G.,
+ Sreenath, K., and Tabuada, P. (2019). Control Barrier
+ Functions: Theory and Applications. In 2019 18th
+ European Control Conference (ECC), 3420–3431.
+
+Bandyopadhyay, S., Subramanian, G.P., Foust, R., Mor
+gan, D., Chung, S.J., and Hadaegh, F. (2015). A Review
+ of Impending Small Satellite Formation Flying Missions.
+ In 53rd AIAA Aerospace Sciences Meeting. American
+ Institute of Aeronautics and Astronautics.
+
+Borrmann, U., Wang, L., Ames, A.D., and Egerstedt, M.
+ (2015). Control Barrier Certificates for Safe Swarm
+ Behavior. IFAC-PapersOnLine, 48(27), 68–73.
+
+Chen, Y., Singletary, A., and Ames, A.D. (2021). Guar
+anteed Obstacle Avoidance for Multi-Robot Operations
+ With Limited Actuation: A Control Barrier Function
+ Approach. IEEE Control Systems Letters, 5(1), 127
+132.
+
+ Cheng, R., Khojasteh, M.J., Ames, A.D., and Burdick,
+ J.W. (2020). Safe multi-agent interaction through ro-
+ bust control barrier functions with learned uncertain
+ties. In 2020 59th IEEE Conference on Decision and
+ Control (CDC), 777–783.
+
+ Clohessy, W.H. and Wiltshire, R.S. (1960). Terminal
+ guidance system for satellite rendezvous. Journal of the
+ Aerospace Sciences, 27(9), 653–658.
+
+ Douthwaite, J.A., Zhao, S., and Mihaylova, L.S. (2019).
+ Velocity obstacle approaches for multi-agent collision
+ avoidance. Unmanned Systems, 07(01), 55–64.
+
+Guan, Y., Zhang, X., Chen, D., and Fan, S. (2024). Arti
+ficial potential field-based method for multi-spacecraft
+ loose formation control. Journal of Physics: Conference
+ Series, 2746(1), 012053.
+
+Hibbard, M., Topcu, U., and Hobbs, K. (2022). Guaran
+teeing Safety via Active-Set Invariance Filters for Multi
+Agent Space Systems with Coupled Dynamics. In 2022
+ American Control Conference (ACC), 430–436.
+
+ Hwang, J., Lee, J., and Park, C. (2022). Collision avoid
+ance control for formation flying of multiple spacecraft
+ using artificial potential field. Advances in Space Re
+search, 69(5), 2197–2209.
+
+ Li, Z., Li, H., and Li, C. (2025). Elvo-based au
+tonomous satellite collision avoidance with multiple de
+bris. Aerospace, 12(5).
+
+ Liu, M. and Chen, Y. (2024). Safety-Guaranteed Learning
+Based Flocking Control Design. IEEE Control Systems
+ Letters, 8, 19–24.
+
+Min, S., Lyu, X., Holtzman, A., Artetxe, M., Lewis, M.,
+ Hajishirzi, H., and Zettlemoyer, L. (2022). Rethinking
+ the Role of Demonstrations: What Makes In-Context
+ Learning Work?
+
+Park, T.H. and D’Amico, S. (2024). Rapid abstraction of
+ spacecraft 3d structure from single 2d image. In AIAA
+ SCITECH 2024 Forum.
+
+ Pirovano, L. and Armellin, R. (2024). Detection and
+ estimation of spacecraft maneuvers for catalog mainte
+nance. Acta Astronautica, 215, 387–397.
+
+ Team, G. (2024). Gemma: Open models based on gemini
+ research and technology.
+
+ Van Den Berg, J., Guy, S.J., Lin, M., and Manocha, D.
+ (2011). Reciprocal n-Body Collision Avoidance. 70, 3
+19. Springer Tracts in Advanced Robotics.
+
+Xiao, W. and Belta, C. (2022). High-order control barrier
+ functions. IEEE Transactions on Automatic Control,
+ 67(7), 3655–3662.
